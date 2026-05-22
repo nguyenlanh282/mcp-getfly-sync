@@ -342,18 +342,41 @@ function renderSyncHistory(history) {
 }
 
 async function triggerSync() {
+  const btn = document.getElementById('btn-sync-now');
+  const days = parseInt(document.getElementById('sync-days-select')?.value) || 7;
+
+  btn.disabled = true;
+  btn.innerHTML = '&#x23F3; Syncing...';
+  toast(`Đang bắt đầu sync (${days === 0 ? 'tất cả' : days + ' ngày'})...`, 'info');
+
   try {
-    const btn = document.getElementById('btn-sync-now');
-    const days = parseInt(document.getElementById('sync-days-select').value);
-    btn.disabled = true;
-    btn.innerHTML = '&#x23F3; Syncing...';
-    toast(`Sync started (${days === 0 ? 'all data' : days + ' days'})...`, 'info');
-    await api('/sync/trigger', { method: 'POST', body: JSON.stringify({ days }) });
-    // SSE will handle the progress updates automatically
+    const result = await fetch('/api/sync/trigger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ days }),
+    });
+
+    if (result.status === 401) {
+      window.location.href = '/auth/login';
+      return;
+    }
+
+    const data = await result.json();
+
+    if (!result.ok) {
+      toast('Lỗi: ' + (data.error || result.statusText), 'error');
+      btn.disabled = false;
+      btn.innerHTML = '&#x1F504; Sync Now';
+      return;
+    }
+
+    console.log('[Sync] Triggered:', data);
+    // SSE sẽ tự cập nhật progress và re-enable button khi xong
   } catch (err) {
-    toast('Sync failed: ' + err.message, 'error');
-    const btn = document.getElementById('btn-sync-now');
-    if (btn) { btn.disabled = false; btn.innerHTML = '&#x1F504; Sync Now'; }
+    console.error('[Sync] Trigger failed:', err);
+    toast('Sync thất bại: ' + err.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '&#x1F504; Sync Now';
   }
 }
 
