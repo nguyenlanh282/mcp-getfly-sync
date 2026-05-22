@@ -12,15 +12,53 @@ const TAG = 'Webhook';
 
 const recentWebhooks = [];
 
+// ── Simple queue: xử lý tuần tự, tránh 429 khi nhiều webhook đến cùng lúc ──
+const webhookQueue = [];
+let queueRunning = false;
+
+async function enqueueWebhook(payload) {
+  webhookQueue.push(payload);
+  if (!queueRunning) drainQueue();
+}
+
+async function drainQueue() {
+  if (queueRunning || webhookQueue.length === 0) return;
+  queueRunning = true;
+  while (webhookQueue.length > 0) {
+    const payload = webhookQueue.shift();
+    try {
+      await processNewOrder(payload);
+    } catch (err) {
+      log.error(TAG, `Failed to process ${payload.orderCode}:`, { error: err.message });
+    }
+    // Delay 1s giữa các webhook để tránh rate limit Getfly
+    if (webhookQueue.length > 0) await sleep(1000);
+  }
+  queueRunning = false;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Retry wrapper cho Getfly 429
+async function withRateLimit(fn, maxRetries = 3) {
+  for (let i = 1; i <= maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const is429 = err.response?.status === 429;
+      if (!is429 || i === maxRetries) throw err;
+      const delay = 2000 * i; // 2s, 4s, 6s
+      log.warn(TAG, `Getfly rate limited (429), retry ${i}/${maxRetries} in ${delay / 1000}s...`);
+      await sleep(delay);
+    }
+  }
+}
+
 // Webhook authentication middleware
 function verifyWebhook(req, res, next) {
   const secret = config.webhookSecret;
-  if (!secret) return next(); // no secret configured, allow all
+  if (!secret) return next();
 
-  // Support multiple auth methods:
-  // 1. Query param: ?secret=xxx
-  // 2. Header: X-Webhook-Secret: xxx
-  // 3. Header: Authorization: Bearer xxx
   const fromQuery = req.query.secret;
   const fromHeader = req.headers['x-webhook-secret'];
   const fromAuth = (req.headers.authorization || '').replace('Bearer ', '');
@@ -42,11 +80,10 @@ router.post('/pancake-pos', verifyWebhook, async (req, res) => {
     const payload = parseWebhookPayload(req.body);
     log.info(TAG, `Order ${payload.orderCode} | ${payload.customerName} | conv: ${payload.conversationId}`);
 
+    // Trả lời Pancake ngay (tránh timeout), xử lý bất đồng bộ qua queue
     res.status(200).json({ success: true });
 
-    processNewOrder(payload).catch((err) => {
-      log.error(TAG, `Failed to process ${payload.orderCode}:`, { error: err.message });
-    });
+    enqueueWebhook(payload);
   } catch (err) {
     log.error(TAG, 'Webhook error:', { error: err.message });
     res.status(400).json({ error: 'Invalid payload' });
@@ -65,7 +102,7 @@ async function processNewOrder(payload) {
     return;
   }
 
-  // Step 1: Get conversation from Pancake Chat by conversation_id
+  // Step 1: Get conversation from Pancake Chat
   log.info(TAG, `Looking up conversation ${conversationId} on Pancake Chat...`);
   const conversation = await pancakeChat.getConversationById(conversationId);
 
@@ -81,7 +118,6 @@ async function processNewOrder(payload) {
 
   if (!getflyUser) {
     log.warn(TAG, `No Getfly match for: ${conversation.assigneeName}`);
-    // Still save mapping so poller can retry later
     orderStore.set(orderCode, {
       conversationId,
       assigneeId: conversation.assigneeId,
@@ -91,30 +127,28 @@ async function processNewOrder(payload) {
     return;
   }
 
-  // Step 3: Assign on Getfly (order + account manager)
+  // Step 3: Assign on Getfly (with rate limit retry)
   try {
-    await getfly.assignOrderToUser(orderCode, getflyUser.user_id);
+    await withRateLimit(() => getfly.assignOrderToUser(orderCode, getflyUser.user_id));
     log.info(TAG, `Order ${orderCode} -> ${getflyUser.contact_name} (user_id: ${getflyUser.user_id}) on Getfly`);
   } catch (err) {
-    log.warn(TAG, `Getfly assign failed (order may not be synced yet): ${err.message}`);
+    log.warn(TAG, `Getfly assign failed: ${err.message}`);
   }
 
-  // Step 4: Update account manager on customer account
+  // Step 4: Update account manager
   try {
     let accountId = null;
 
-    // Try finding account via order on Getfly first
-    const gfOrder = await getfly.findOrderByCode(orderCode);
+    const gfOrder = await withRateLimit(() => getfly.findOrderByCode(orderCode));
     if (gfOrder && gfOrder.account_id) {
       accountId = gfOrder.account_id;
     } else if (customerPhone) {
-      // Fallback: find account by phone
-      const account = await getfly.findAccountByPhone(customerPhone);
+      const account = await withRateLimit(() => getfly.findAccountByPhone(customerPhone));
       if (account) accountId = account.id;
     }
 
     if (accountId) {
-      await getfly.changeAccountManager(accountId, getflyUser.user_id);
+      await withRateLimit(() => getfly.changeAccountManager(accountId, getflyUser.user_id));
       log.info(TAG, `Account ${accountId} manager -> ${getflyUser.contact_name}`);
     } else {
       log.warn(TAG, `No Getfly account found for order ${orderCode}`);
@@ -123,7 +157,7 @@ async function processNewOrder(payload) {
     log.warn(TAG, `Account manager update failed: ${err.message}`);
   }
 
-  // Save mapping for future polling
+  // Save mapping
   orderStore.set(orderCode, {
     conversationId,
     assigneeId: conversation.assigneeId,
