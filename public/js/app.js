@@ -267,12 +267,31 @@ function updateProgressDetails(progress) {
     else if (idx === currentIdx) el.classList.add('active');
   });
 
-  // Step values
+  // Step values — show ⏳ for active step, value when done, keep previous value if already set
   const d = progress.details || {};
-  if (d.posTotal !== undefined) document.getElementById('step-pos').textContent = `${d.posRelevant || 0} / ${d.posTotal}`;
-  if (d.chatTotal !== undefined) document.getElementById('step-chat').textContent = d.chatTotal.toLocaleString();
-  if (d.getflyTotal !== undefined) document.getElementById('step-getfly').textContent = d.getflyTotal.toLocaleString();
-  if (d.processed !== undefined) document.getElementById('step-compare').textContent = `${d.processed}/${d.compareTotal || '?'} (${d.updated || 0} updated)`;
+  const stepOrder = { 'fetching-pos': 0, 'fetching-chat': 1, 'fetching-getfly': 2, 'loading-users': 2, 'comparing': 3, 'done': 4, 'error': -1 };
+  const currentIdx = stepOrder[progress.step] ?? -1;
+
+  const setStepVal = (elId, stepName, valueFn, loadingText = '⏳ Loading...') => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const idx = stepOrder[stepName] ?? -1;
+    if (valueFn()) {
+      el.textContent = valueFn();          // value available → show it
+    } else if (idx === currentIdx) {
+      el.innerHTML = `<span style="opacity:0.6">${loadingText}</span>`;  // active step → spinner
+    }
+    // past/future with no value → keep whatever was there
+  };
+
+  setStepVal('step-pos', 'fetching-pos',
+    () => d.posTotal !== undefined ? `${d.posRelevant || 0} / ${d.posTotal}` : null, '⏳ Fetching...');
+  setStepVal('step-chat', 'fetching-chat',
+    () => d.chatTotal !== undefined ? d.chatTotal.toLocaleString() : null, '⏳ Fetching...');
+  setStepVal('step-getfly', 'fetching-getfly',
+    () => d.getflyTotal !== undefined ? d.getflyTotal.toLocaleString() : null, '⏳ Fetching...');
+  setStepVal('step-compare', 'comparing',
+    () => d.processed !== undefined ? `${d.processed}/${d.compareTotal || '?'} (${d.updated || 0} ✓)` : null, '⏳ Comparing...');
 }
 
 // ── Sync Status (sidebar) ──
