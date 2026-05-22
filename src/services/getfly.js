@@ -49,9 +49,10 @@ async function getSaleOrders(params = {}) {
 }
 
 async function findOrderByCode(orderCode) {
-  const result = await getSaleOrders({ limit: 100 });
+  // Search directly by order_code instead of fetching first 100
+  const result = await getSaleOrders({ search: orderCode, limit: 10 });
   const orders = result.data || [];
-  return orders.find((o) => o.order_code === orderCode);
+  return orders.find((o) => o.order_code === orderCode) || null;
 }
 
 /**
@@ -62,7 +63,7 @@ async function getAllPancakeOrders() {
   const allOrders = new Map();
   let offset = 0;
   const pageSize = 50;
-  const maxPages = 50;
+  const maxPages = 200; // 200 × 50 = 10.000 đơn tối đa
 
   log.info(TAG, 'Fetching all PANCAKE orders from Getfly...');
 
@@ -73,6 +74,7 @@ async function getAllPancakeOrders() {
           fields: 'id,order_code,assigned_user,assigned_user_name,account_id,account_phone,contact_name,status,status_label',
           limit: pageSize,
           offset,
+          search: 'PANCAKE', // filter ngay từ API để giảm số lượng request cần xử lý
         },
       })
     );
