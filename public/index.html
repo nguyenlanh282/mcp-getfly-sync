@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pancake ↔ Getfly Sync</title>
+  <link rel="stylesheet" href="/css/style.css?v=3">
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1>&#x1F95E; Sync Panel</h1>
+    <div class="subtitle">Pancake POS &middot; Chat &middot; Getfly</div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item active" data-page="dashboard">
+      <span class="icon">&#x1F4CA;</span> Dashboard
+    </a>
+    <a class="nav-item" data-page="orders">
+      <span class="icon">&#x1F4E6;</span> Orders
+      <span class="badge" id="nav-orders-badge" style="display:none">0</span>
+    </a>
+    <a class="nav-item" data-page="staff">
+      <span class="icon">&#x1F465;</span> Staff Mapping
+      <span class="badge" id="nav-staff-badge" style="display:none">0</span>
+    </a>
+    <a class="nav-item" data-page="settings">
+      <span class="icon">&#x2699;&#xFE0F;</span> Settings
+    </a>
+    <a class="nav-item" data-page="logs">
+      <span class="icon">&#x1F4DC;</span> Logs
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="server-info">
+      <div class="server-stat"><span>PID:</span> <span id="server-pid">-</span></div>
+      <div class="server-stat"><span>RAM:</span> <span id="server-memory">-</span></div>
+      <div class="server-stat"><span>Uptime:</span> <span id="server-uptime">-</span></div>
+    </div>
+    <div class="sync-indicator">
+      <span class="sync-dot" id="sync-dot"></span>
+      <span id="sync-status-text">Idle</span>
+    </div>
+    <button class="btn-logout" onclick="logout()" title="Logout">
+      &#x1F6AA; Logout
+    </button>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- DASHBOARD -->
+  <section class="page active" id="page-dashboard">
+    <div class="topbar">
+      <h2>Dashboard</h2>
+      <div class="topbar-actions">
+        <select id="sync-days-select" title="Days to sync">
+          <option value="0">All (12 months)</option>
+          <option value="1">1 day</option>
+          <option value="2" selected>2 days</option>
+          <option value="7">7 days</option>
+          <option value="14">14 days</option>
+          <option value="28">28 days</option>
+        </select>
+        <button class="btn btn-primary" id="btn-sync-now" onclick="triggerSync()">&#x1F504; Sync Now</button>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- Process Control Panel -->
+      <div class="process-panel">
+        <div class="process-header">
+          <h3>&#x2699;&#xFE0F; Process Control</h3>
+          <span class="process-subtitle">Manage sync processes from here</span>
+        </div>
+        <div class="process-grid">
+          <!-- Order Sync Scheduler -->
+          <div class="process-card" id="process-scheduler">
+            <div class="process-card-header">
+              <div class="process-info">
+                <span class="process-icon">&#x23F0;</span>
+                <div>
+                  <div class="process-name">Order Sync Scheduler</div>
+                  <div class="process-desc" id="scheduler-desc">Auto sync every 5 min</div>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-scheduler" onchange="toggleScheduler(this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="process-status" id="scheduler-status">
+              <span class="status-dot off"></span> Stopped
+            </div>
+          </div>
+
+          <!-- Chat Poller -->
+          <div class="process-card" id="process-poller">
+            <div class="process-card-header">
+              <div class="process-info">
+                <span class="process-icon">&#x1F4AC;</span>
+                <div>
+                  <div class="process-name">Chat Assignment Poller</div>
+                  <div class="process-desc" id="poller-desc">Check changes every 30s</div>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-poller" onchange="togglePoller(this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="process-status" id="poller-status">
+              <span class="status-dot off"></span> Stopped
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sync Progress -->
+      <div class="panel progress-panel" id="sync-progress-panel" style="display:none">
+        <div class="panel-header">
+          <h3>&#x26A1; Sync Progress</h3>
+          <span class="progress-elapsed" id="progress-elapsed"></span>
+        </div>
+        <div class="panel-body padded">
+          <div class="progress-steps">
+            <div class="progress-step" data-step="fetching-pos">
+              <span class="step-icon">&#x1F4E6;</span>
+              <span class="step-label">POS Orders</span>
+              <span class="step-value" id="step-pos">-</span>
+            </div>
+            <div class="progress-step" data-step="fetching-chat">
+              <span class="step-icon">&#x1F4AC;</span>
+              <span class="step-label">Chat Conversations</span>
+              <span class="step-value" id="step-chat">-</span>
+            </div>
+            <div class="progress-step" data-step="fetching-getfly">
+              <span class="step-icon">&#x1F4BC;</span>
+              <span class="step-label">Getfly Orders</span>
+              <span class="step-value" id="step-getfly">-</span>
+            </div>
+            <div class="progress-step" data-step="comparing">
+              <span class="step-icon">&#x1F50D;</span>
+              <span class="step-label">Compare & Update</span>
+              <span class="step-value" id="step-compare">-</span>
+            </div>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar" id="sync-progress-bar" style="width:0%"></div>
+          </div>
+          <div class="progress-message" id="sync-progress-message">Initializing...</div>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card"><div class="label">Total Orders</div><div class="value" id="stat-total">-</div></div>
+        <div class="stat-card success"><div class="label">Synced</div><div class="value" id="stat-synced">-</div></div>
+        <div class="stat-card info"><div class="label">Updated</div><div class="value" id="stat-updated">-</div></div>
+        <div class="stat-card warning"><div class="label">Unmapped Staff</div><div class="value" id="stat-unmapped">-</div></div>
+        <div class="stat-card"><div class="label">Not on Getfly</div><div class="value" id="stat-notgetfly">-</div></div>
+        <div class="stat-card error"><div class="label">Errors</div><div class="value" id="stat-errors">-</div></div>
+      </div>
+
+      <!-- Last Sync + History -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Last Sync</h3>
+          <span id="last-sync-time" style="font-size:12px;color:var(--text-secondary)">Never</span>
+        </div>
+        <div class="panel-body padded" id="last-sync-info">
+          <div class="empty-state"><p>No sync data yet. Click "Sync Now" to start.</p></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>Sync History</h3></div>
+        <div class="panel-body" id="sync-history-body">
+          <div class="empty-state"><p>No sync history</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ORDERS -->
+  <section class="page" id="page-orders">
+    <div class="topbar">
+      <h2>Orders</h2>
+      <div class="topbar-actions">
+        <button class="btn btn-secondary btn-sm" onclick="refreshOrders()">&#x1F504; Refresh</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="filter-bar">
+        <div class="search-bar">
+          <span class="search-icon">&#x1F50D;</span>
+          <input type="text" id="order-search" placeholder="Search order, customer, staff..." oninput="debounceSearch()">
+        </div>
+        <select id="order-status-filter" onchange="refreshOrders()">
+          <option value="all">All Status</option>
+          <option value="synced">Synced</option>
+          <option value="updated">Updated</option>
+          <option value="unmapped-staff">Unmapped Staff</option>
+          <option value="not-on-getfly">Not on Getfly</option>
+          <option value="no-chat-assignee">No Chat Assignee</option>
+          <option value="error">Error</option>
+        </select>
+      </div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Order Code</th><th>Customer</th><th>Phone</th><th>Chat Assignee</th><th>Getfly Assignee</th><th>Status</th></tr></thead>
+              <tbody id="orders-tbody">
+                <tr><td colspan="6" class="empty-state"><p>No data. Run a sync first.</p></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="orders-pagination" style="display:none">
+            <span id="orders-page-info">Page 1</span>
+            <div class="pagination-buttons">
+              <button class="btn btn-secondary btn-sm" id="btn-prev" onclick="changePage(-1)">&#x25C0; Prev</button>
+              <button class="btn btn-secondary btn-sm" id="btn-next" onclick="changePage(1)">Next &#x25B6;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAFF MAPPING -->
+  <section class="page" id="page-staff">
+    <div class="topbar">
+      <h2>Staff Mapping</h2>
+      <div class="topbar-actions">
+        <button class="btn btn-secondary btn-sm" onclick="refreshStaff()">&#x1F504; Refresh</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="panel">
+        <div class="panel-header"><h3>&#x26A0;&#xFE0F; Unmapped Staff (Pancake Chat &rarr; Getfly)</h3></div>
+        <div class="panel-body">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Pancake Name</th><th>Email</th><th>Orders Affected</th></tr></thead>
+              <tbody id="unmapped-tbody"><tr><td colspan="3" class="empty-state"><p>All staff mapped!</p></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>Getfly Users</h3></div>
+        <div class="panel-body">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>User ID</th><th>Name</th><th>Email</th><th>Department</th></tr></thead>
+              <tbody id="getfly-users-tbody"><tr><td colspan="4" class="empty-state"><p>Loading...</p></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="page" id="page-settings">
+    <div class="topbar"><h2>Settings</h2></div>
+    <div class="content">
+      <div class="settings-grid">
+
+        <!-- Pancake POS -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>&#x1F95E; Pancake POS</h3>
+            <button class="btn btn-secondary btn-sm" onclick="testConnection('pancake-pos')">Test</button>
+          </div>
+          <div class="panel-body padded">
+            <div class="input-group">
+              <label>API Key</label>
+              <input type="text" id="cfg-pos-api-key" placeholder="Pancake POS API Key">
+            </div>
+            <div class="input-group">
+              <label>Base URL</label>
+              <input type="text" id="cfg-pos-base-url" placeholder="https://pos.pages.fm/api/v1">
+            </div>
+            <div class="input-group">
+              <label>Shop ID</label>
+              <input type="text" id="cfg-pos-shop-id" placeholder="Shop ID">
+            </div>
+            <div class="test-result" id="test-pancake-pos"></div>
+            <div class="save-result" id="save-result-pos"></div>
+            <button class="btn btn-primary btn-save" onclick="saveSection('pos')">&#x1F4BE; Save Pancake POS</button>
+          </div>
+        </div>
+
+        <!-- Pancake Chat -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>&#x1F4AC; Pancake Chat</h3>
+            <button class="btn btn-secondary btn-sm" onclick="testConnection('pancake-chat')">Test</button>
+          </div>
+          <div class="panel-body padded">
+            <div class="input-group">
+              <label>Page Token (Access Token)</label>
+              <input type="text" id="cfg-chat-token" placeholder="JWT token">
+            </div>
+            <div class="input-group">
+              <label>Base URL</label>
+              <input type="text" id="cfg-chat-base-url" placeholder="https://pages.fm/api/public_api/v1">
+            </div>
+            <div class="input-group">
+              <label>Page ID</label>
+              <input type="text" id="cfg-chat-page-id" placeholder="Page ID">
+            </div>
+            <div class="test-result" id="test-pancake-chat"></div>
+            <div class="save-result" id="save-result-chat"></div>
+            <button class="btn btn-primary btn-save" onclick="saveSection('chat')">&#x1F4BE; Save Pancake Chat</button>
+          </div>
+        </div>
+
+        <!-- Getfly CRM -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>&#x1F4BC; Getfly CRM</h3>
+            <button class="btn btn-secondary btn-sm" onclick="testConnection('getfly')">Test</button>
+          </div>
+          <div class="panel-body padded">
+            <div class="input-group">
+              <label>API Key</label>
+              <input type="text" id="cfg-getfly-api-key" placeholder="Getfly API Key">
+            </div>
+            <div class="input-group">
+              <label>Base URL</label>
+              <input type="text" id="cfg-getfly-base-url" placeholder="https://xxx.getflycrm.com">
+            </div>
+            <div class="test-result" id="test-getfly"></div>
+            <div class="save-result" id="save-result-getfly"></div>
+            <button class="btn btn-primary btn-save" onclick="saveSection('getfly')">&#x1F4BE; Save Getfly CRM</button>
+          </div>
+        </div>
+
+        <!-- Sync Settings -->
+        <div class="panel">
+          <div class="panel-header"><h3>&#x23F0; Sync Settings</h3></div>
+          <div class="panel-body padded">
+            <div class="input-group">
+              <label>Order Sync Interval (seconds)</label>
+              <input type="number" id="cfg-sync-interval" min="60" step="30" value="300">
+            </div>
+            <div class="input-group">
+              <label>Days to Scan (0 = all)</label>
+              <input type="number" id="cfg-sync-days" min="0" max="365" value="2">
+            </div>
+            <div class="input-group">
+              <label>Chat Poll Interval (seconds)</label>
+              <input type="number" id="cfg-chat-poll" min="10" step="5" value="30">
+            </div>
+            <div class="save-result" id="save-result-sync"></div>
+            <button class="btn btn-primary btn-save" onclick="saveSection('sync')">&#x1F4BE; Save Sync Settings</button>
+          </div>
+        </div>
+
+        <!-- Webhook -->
+        <div class="panel">
+          <div class="panel-header"><h3>&#x1F517; Webhook</h3></div>
+          <div class="panel-body padded">
+            <div class="input-group">
+              <label>Webhook Secret</label>
+              <input type="text" id="cfg-webhook-secret" placeholder="Webhook secret key">
+            </div>
+            <div class="input-group">
+              <label>Webhook URL (copy to Pancake POS)</label>
+              <div class="copy-field">
+                <input type="text" id="cfg-webhook-url" readonly>
+                <button class="btn btn-secondary btn-sm" onclick="copyWebhookUrl()">Copy</button>
+              </div>
+            </div>
+            <div class="save-result" id="save-result-webhook"></div>
+            <button class="btn btn-primary btn-save" onclick="saveSection('webhook')">&#x1F4BE; Save Webhook</button>
+          </div>
+        </div>
+
+        <!-- Change Password -->
+        <div class="panel">
+          <div class="panel-header"><h3>&#x1F512; Change Password</h3></div>
+          <div class="panel-body padded">
+            <div class="input-group">
+              <label>Current Password</label>
+              <input type="password" id="cfg-current-pass" placeholder="Current password">
+            </div>
+            <div class="input-group">
+              <label>New Password</label>
+              <input type="password" id="cfg-new-pass" placeholder="New password (min 6 chars)">
+            </div>
+            <div class="save-result" id="save-result-password"></div>
+            <button class="btn btn-primary btn-save" onclick="changePassword()">&#x1F512; Change Password</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGS -->
+  <section class="page" id="page-logs">
+    <div class="topbar">
+      <h2>Logs</h2>
+      <div class="topbar-actions">
+        <input type="text" id="log-filter" placeholder="Filter logs..." style="width:200px;padding:6px 10px;font-size:13px;border:1px solid var(--border);border-radius:6px" oninput="refreshLogs()">
+        <select id="log-level-filter" onchange="refreshLogs()" style="width:auto;min-width:100px;padding:6px 10px;font-size:13px">
+          <option value="">All Levels</option>
+          <option value="ERROR">ERROR</option>
+          <option value="WARN">WARN</option>
+          <option value="INFO">INFO</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-secondary)">
+          <input type="checkbox" id="log-auto-refresh" checked> Auto
+        </label>
+        <button class="btn btn-secondary btn-sm" onclick="refreshLogs()">&#x1F504; Refresh</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="panel">
+        <div class="panel-body">
+          <div class="log-container" id="log-container">
+            <div class="empty-state" style="color:#64748B"><p>Loading logs...</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="/js/app.js?v=3"></script>
+</body>
+</html>
