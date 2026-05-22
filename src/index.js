@@ -142,23 +142,25 @@ async function start() {
     log.warn(TAG, `Missing config: ${missing.join(', ')}. Some features may not work.`);
   }
 
-  // Pre-load Getfly users for staff mapping
-  await staffMapper.loadGetflyUsers().catch((err) => {
-    log.warn(TAG, 'Could not pre-load Getfly users:', { error: err.message });
-  });
-
-  // Start Pancake Chat polling (for webhook-tracked orders)
-  chatPoller.start(config.chatPollInterval);
-
-  // Start full order sync (scans ALL recent POS orders)
-  orderSync.start(config.orderSyncInterval, config.orderSyncDays);
-
   app.listen(config.port, () => {
     log.info(TAG, `Server running on port ${config.port}`);
     log.info(TAG, `Dashboard: http://localhost:${config.port}`);
     log.info(TAG, `Webhook URL: http://localhost:${config.port}/webhook/pancake-pos`);
-    log.info(TAG, `Order sync: every ${config.orderSyncInterval / 1000}s, last ${config.orderSyncDays} days`);
+    log.info(TAG, `Auto-start: ${process.env.SYNC_AUTO_START === 'true' ? 'ON' : 'OFF (manual from dashboard)'}`);
   });
+
+  // Auto-start chỉ khi SYNC_AUTO_START=true được set rõ ràng
+  if (process.env.SYNC_AUTO_START === 'true') {
+    log.info(TAG, 'SYNC_AUTO_START=true — starting scheduler and poller automatically...');
+    // Pre-load Getfly users for staff mapping
+    await staffMapper.loadGetflyUsers().catch((err) => {
+      log.warn(TAG, 'Could not pre-load Getfly users:', { error: err.message });
+    });
+    chatPoller.start(config.chatPollInterval);
+    orderSync.start(config.orderSyncInterval, config.orderSyncDays);
+  } else {
+    log.info(TAG, 'Ready. Scheduler and Poller are OFF — enable from the dashboard.');
+  }
 }
 
 process.on('SIGTERM', () => {
