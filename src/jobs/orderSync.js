@@ -25,6 +25,7 @@ const MAX_HISTORY = 100;
 let lastSyncOrders = [];
 let unmappedStaff = new Map(); // name -> { name, email, orderCount }
 let isRunning = false;
+let syncInterval = null;   // declared early so getStatus() can safely reference it
 let currentInterval = null;
 let currentDays = null;
 
@@ -392,12 +393,24 @@ function getOrders(options = {}) {
   return { orders: paged, total: totalFiltered, page, pageSize, stats };
 }
 
+function getStats() {
+  return {
+    total: lastSyncOrders.length,
+    synced: lastSyncOrders.filter((o) => o.status === 'synced').length,
+    updated: lastSyncOrders.filter((o) => o.status === 'updated').length,
+    unmapped: lastSyncOrders.filter((o) => o.status === 'unmapped-staff').length,
+    notOnGetfly: lastSyncOrders.filter((o) => o.status === 'not-on-getfly').length,
+    noAssignee: lastSyncOrders.filter((o) => o.status === 'no-chat-assignee').length,
+    errors: lastSyncOrders.filter((o) => o.status === 'error').length,
+  };
+}
+
 function getUnmappedStaff() {
   return Array.from(unmappedStaff.values()).sort((a, b) => b.orderCount - a.orderCount);
 }
 
 // ── Scheduler ──
-let syncInterval = null;
+// (syncInterval already declared at top of module)
 
 function start(intervalMs, daysBack = 2) {
   if (syncInterval) return;
@@ -460,6 +473,7 @@ module.exports = {
   getProgress,
   getHistory,
   getOrders,
+  getStats,
   getUnmappedStaff,
   isSchedulerRunning,
 };

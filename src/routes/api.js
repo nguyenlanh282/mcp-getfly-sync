@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 const orderSync = require('../jobs/orderSync');
 const chatPoller = require('../jobs/chatPoller');
 const staffMapper = require('../utils/staffMapper');
@@ -155,22 +156,22 @@ router.get('/config', (req, res) => {
     syncDays: config.orderSyncDays,
     chatPollInterval: config.chatPollInterval,
 
-    // Pancake POS
-    pancakePosApiKey: config.pancakePOS.apiKey || '',
+    // Pancake POS (masked)
+    pancakePosApiKey: maskKey(config.pancakePOS.apiKey),
     pancakePosBaseUrl: config.pancakePOS.baseURL || '',
     pancakeShopId: config.pancakePOS.shopId || '',
 
-    // Pancake Chat
-    pancakeChatPageToken: config.pancakeChat.pageToken || '',
+    // Pancake Chat (masked)
+    pancakeChatPageToken: maskKey(config.pancakeChat.pageToken),
     pancakeChatBaseUrl: config.pancakeChat.baseURL || '',
     pancakeChatPageId: config.pancakeChat.pageId || '',
 
-    // Getfly
-    getflyApiKey: config.getfly.apiKey || '',
+    // Getfly (masked)
+    getflyApiKey: maskKey(config.getfly.apiKey),
     getflyBaseUrl: config.getfly.baseURL || '',
 
-    // Webhook
-    webhookSecret: config.webhookSecret || '',
+    // Webhook (masked)
+    webhookSecret: maskKey(config.webhookSecret),
     webhookUrl: `https://sync.tripower.vn/webhook/pancake-pos?secret=${config.webhookSecret}`,
 
     // Server
@@ -312,16 +313,24 @@ router.post('/config/test-getfly', async (req, res) => {
 // Change admin password
 router.post('/config/change-password', (req, res) => {
   const { currentPassword, newPassword } = req.body;
-  if (currentPassword !== config.admin.pass) {
+
+  // Support both plain-text (legacy) and bcrypt hashed passwords
+  const isHashed = config.admin.pass.startsWith('$2');
+  const currentMatch = isHashed
+    ? bcrypt.compareSync(currentPassword, config.admin.pass)
+    : currentPassword === config.admin.pass;
+
+  if (!currentMatch) {
     return res.status(400).json({ error: 'Mật khẩu hiện tại không đúng' });
   }
   if (!newPassword || newPassword.length < 6) {
     return res.status(400).json({ error: 'Mật khẩu mới tối thiểu 6 ký tự' });
   }
-  config.admin.pass = newPassword;
+  const hashed = bcrypt.hashSync(newPassword, 10);
+  config.admin.pass = hashed;
   try {
-    updateEnvFile({ ADMIN_PASS: newPassword });
-    log.info('Config', 'Admin password changed');
+    updateEnvFile({ ADMIN_PASS: hashed });
+    log.info('Config', 'Admin password changed (bcrypt hashed)');
   } catch (err) {
     log.warn('Config', `Failed to save password to .env: ${err.message}`);
   }
@@ -349,7 +358,8 @@ router.get('/events', (req, res) => {
     const data = {
       sync: syncStatus,
       poller: pollerStatus,
-      stats: orderSync.getOrders({ pageSize: 99999 }).stats,
+      // Use getStats() instead of scanning all orders for performance
+      stats: orderSync.getStats(),
       progress: syncStatus.progress,
       server: {
         uptime: process.uptime(),
@@ -360,8 +370,7 @@ router.get('/events', (req, res) => {
   };
 
   sendEvent();
-  // Send more frequently when sync is running for smoother progress
-  let interval = setInterval(sendEvent, 3000);
+  const interval = setInterval(sendEvent, 3000);
 
   req.on('close', () => clearInterval(interval));
 });
@@ -394,3 +403,4 @@ function updateEnvFile(updates) {
 }
 
 module.exports = router;
+module.exports.updateEnvFile = updateEnvFile;

@@ -1,6 +1,27 @@
+# Dependencies
 node_modules/
+
+# Environment variables (NEVER commit)
 .env
+.env.local
+.env.*.local
+
+# Runtime data
 data/
-.DS_Store
-/tmp
 *.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build / temp
+dist/
+tmp/
+/tmp
+
+# Wrangler (Cloudflare Workers - nếu không dùng thì bỏ qua)
+.wrangler/
+
+# IDE
+.vscode/
+.idea/

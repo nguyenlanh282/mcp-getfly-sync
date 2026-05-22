@@ -13,6 +13,9 @@ const log = require('./utils/logger');
 const TAG = 'Server';
 const app = express();
 
+// Trust reverse proxy (Cloudflare, Nginx, Traefik)
+app.set('trust proxy', 1);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -24,7 +27,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // set true nếu dùng HTTPS trực tiếp (Cloudflare proxy handle SSL)
+      secure: process.env.NODE_ENV === 'production', // true in production (behind proxy)
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
   })

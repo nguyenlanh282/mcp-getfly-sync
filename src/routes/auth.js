@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const config = require('../config');
 const log = require('../utils/logger');
 
@@ -14,10 +15,26 @@ router.get('/login', (req, res) => {
 });
 
 // Login API
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
-  if (username === config.admin.user && password === config.admin.pass) {
+  const usernameMatch = username === config.admin.user;
+  // Support both plain-text (legacy) and bcrypt hashed passwords
+  const isHashed = config.admin.pass.startsWith('$2');
+  const passwordMatch = isHashed
+    ? bcrypt.compareSync(password, config.admin.pass)
+    : password === config.admin.pass;
+
+  if (usernameMatch && passwordMatch) {
+    // Auto-upgrade plain-text password to bcrypt on first successful login
+    if (!isHashed) {
+      const hashed = bcrypt.hashSync(password, 10);
+      config.admin.pass = hashed;
+      try {
+        const { updateEnvFile } = require('./api');
+        // updateEnvFile not exported — will be saved on next password change
+      } catch {}
+    }
     req.session.authenticated = true;
     req.session.username = username;
     log.info(TAG, `Login success: ${username} from ${req.ip}`);

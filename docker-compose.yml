@@ -1,0 +1,49 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mcp-getfly:latest
+    container_name: mcp-getfly
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # ── Pancake POS ──
+      PANCAKE_POS_API_KEY: ${PANCAKE_POS_API_KEY}
+      PANCAKE_POS_BASE_URL: ${PANCAKE_POS_BASE_URL:-https://pos.pages.fm/api/v1}
+      PANCAKE_SHOP_ID: ${PANCAKE_SHOP_ID}
+      # ── Pancake Chat ──
+      PANCAKE_CHAT_PAGE_TOKEN: ${PANCAKE_CHAT_PAGE_TOKEN}
+      PANCAKE_CHAT_BASE_URL: ${PANCAKE_CHAT_BASE_URL:-https://pages.fm/api/public_api/v1}
+      PANCAKE_CHAT_PAGE_ID: ${PANCAKE_CHAT_PAGE_ID}
+      # ── Getfly CRM ──
+      GETFLY_API_KEY: ${GETFLY_API_KEY}
+      GETFLY_BASE_URL: ${GETFLY_BASE_URL}
+      # ── Webhook ──
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET}
+      # ── Admin ──
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASS: ${ADMIN_PASS}
+      SESSION_SECRET: ${SESSION_SECRET}
+      # ── Sync Settings ──
+      ORDER_SYNC_INTERVAL: ${ORDER_SYNC_INTERVAL:-300000}
+      ORDER_SYNC_DAYS: ${ORDER_SYNC_DAYS:-2}
+      CHAT_POLL_INTERVAL: ${CHAT_POLL_INTERVAL:-30000}
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      # Persist data (sync history, orders, logs) across restarts
+      - mcp-getfly-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+volumes:
+  mcp-getfly-data:
+    driver: local

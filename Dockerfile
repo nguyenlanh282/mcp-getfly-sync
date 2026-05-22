@@ -13,6 +13,8 @@ COPY public/ ./public/
 # Create data directory for persistence
 RUN mkdir -p /app/data
 
+# Production environment
+ENV NODE_ENV=production
 # Default port (Dokploy/Traefik routes to 3000 by default)
 ENV PORT=3000
 
