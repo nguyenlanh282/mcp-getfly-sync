@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const session = require('express-session');
 const config = require('./config');
@@ -19,12 +20,50 @@ app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Simple file-based session store (no extra dependency needed)
+// Replaces MemoryStore to avoid memory leak in production
+function createFileSessionStore(SessionStore) {
+  const SESSION_DIR = path.join(__dirname, '../data/sessions');
+  if (!fs.existsSync(SESSION_DIR)) fs.mkdirSync(SESSION_DIR, { recursive: true });
+
+  class FileStore extends SessionStore {
+    get(sid, cb) {
+      try {
+        const file = path.join(SESSION_DIR, sid + '.json');
+        if (!fs.existsSync(file)) return cb(null, null);
+        const sess = JSON.parse(fs.readFileSync(file, 'utf8'));
+        if (sess.cookie && sess.cookie.expires && new Date(sess.cookie.expires) < new Date()) {
+          this.destroy(sid, () => {});
+          return cb(null, null);
+        }
+        cb(null, sess);
+      } catch { cb(null, null); }
+    }
+    set(sid, sess, cb) {
+      try {
+        const file = path.join(SESSION_DIR, sid + '.json');
+        fs.writeFileSync(file, JSON.stringify(sess));
+        cb && cb(null);
+      } catch (e) { cb && cb(e); }
+    }
+    destroy(sid, cb) {
+      try {
+        const file = path.join(SESSION_DIR, sid + '.json');
+        if (fs.existsSync(file)) fs.unlinkSync(file);
+        cb && cb(null);
+      } catch { cb && cb(null); }
+    }
+  }
+  return new FileStore();
+}
+
 // Session middleware
 app.use(
   session({
     secret: config.sessionSecret,
     resave: false,
     saveUninitialized: false,
+    store: process.env.NODE_ENV === 'production' ? createFileSessionStore(session.Store) : undefined,
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // true in production (behind proxy)
