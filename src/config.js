@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 module.exports = {
-  port: process.env.PORT || 3000,
+  port: parseInt(process.env.PORT) || 3000,
 
   pancakePOS: {
     apiKey: process.env.PANCAKE_POS_API_KEY,
