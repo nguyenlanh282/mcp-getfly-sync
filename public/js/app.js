@@ -343,7 +343,8 @@ function renderSyncHistory(history) {
 
 async function triggerSync() {
   const btn = document.getElementById('btn-sync-now');
-  const days = parseInt(document.getElementById('sync-days-select')?.value) || 7;
+  const selectEl = document.getElementById('sync-days-select');
+  const days = selectEl ? parseInt(selectEl.value) : 7;
 
   btn.disabled = true;
   btn.innerHTML = '&#x23F3; Syncing...';
