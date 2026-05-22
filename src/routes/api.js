@@ -77,8 +77,8 @@ router.post('/sync/trigger', async (req, res) => {
   const days = req.body?.days !== undefined ? parseInt(req.body.days) : (parseInt(req.query.days) || config.orderSyncDays);
   res.json({ message: 'Sync started', days });
 
-  // Run in background
-  orderSync.syncAssignments(days).catch((err) => {
+  // Run via runSync() to properly manage isRunning flag
+  orderSync.runSync(days).catch((err) => {
     log.error('API', 'Manual sync failed:', { error: err.message });
   });
 });
