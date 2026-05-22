@@ -475,6 +475,7 @@ function updateConfig(intervalMs, daysBack) {
 
 module.exports = {
   syncAssignments,
+  runSync,
   start,
   stop,
   updateConfig,
