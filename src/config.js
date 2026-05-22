@@ -30,5 +30,5 @@ module.exports = {
 
   chatPollInterval: parseInt(process.env.CHAT_POLL_INTERVAL) || 30000,
   orderSyncInterval: parseInt(process.env.ORDER_SYNC_INTERVAL) || 5 * 60 * 1000,
-  orderSyncDays: process.env.ORDER_SYNC_DAYS !== undefined ? parseInt(process.env.ORDER_SYNC_DAYS) : 2,
+  orderSyncDays: process.env.ORDER_SYNC_DAYS !== undefined ? parseInt(process.env.ORDER_SYNC_DAYS) : 7,
 };
