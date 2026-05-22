@@ -135,7 +135,9 @@ async function syncAssignments(daysBack = 2) {
 
   // Step 1: Fetch recent POS orders
   updateProgress('fetching-pos', 'Đang tải đơn hàng từ Pancake POS...', 5);
-  const posOrders = await pancakePOS.getRecentOrders(daysBack);
+  const posOrders = await pancakePOS.getRecentOrders(daysBack, (count) => {
+    updateProgress('fetching-pos', `Đang tải POS... ${count.toLocaleString()} đơn`, 5, { posLive: count });
+  });
 
   // Filter to our page's conversations
   const pageId = config.pancakeChat.pageId;
@@ -146,6 +148,7 @@ async function syncAssignments(daysBack = 2) {
   updateProgress('fetching-pos', `POS: ${posOrders.length} đơn, ${relevantOrders.length} liên quan`, 15, {
     posTotal: posOrders.length,
     posRelevant: relevantOrders.length,
+    posLive: posOrders.length,
   });
 
   if (relevantOrders.length === 0) {
@@ -158,18 +161,24 @@ async function syncAssignments(daysBack = 2) {
 
   // Step 2: Fetch all recent Chat conversations
   updateProgress('fetching-chat', 'Đang tải hội thoại từ Pancake Chat...', 20);
-  const chatAssignments = await pancakeChat.getAllRecentConversations(daysBack);
+  const chatAssignments = await pancakeChat.getAllRecentConversations(daysBack, (count) => {
+    updateProgress('fetching-chat', `Đang tải Chat... ${count.toLocaleString()} hội thoại`, 20, { chatLive: count });
+  });
   log.info(TAG, `Chat conversations: ${chatAssignments.size}`);
   updateProgress('fetching-chat', `Chat: ${chatAssignments.size} hội thoại`, 45, {
     chatTotal: chatAssignments.size,
+    chatLive: chatAssignments.size,
   });
 
   // Step 3: Fetch all PANCAKE orders from Getfly
   updateProgress('fetching-getfly', 'Đang tải đơn PANCAKE từ Getfly CRM...', 50);
-  const getflyOrders = await getfly.getAllPancakeOrders();
+  const getflyOrders = await getfly.getAllPancakeOrders((count) => {
+    updateProgress('fetching-getfly', `Đang tải Getfly... ${count.toLocaleString()} đơn`, 50, { getflyLive: count });
+  });
   log.info(TAG, `Getfly PANCAKE orders: ${getflyOrders.size}`);
   updateProgress('fetching-getfly', `Getfly: ${getflyOrders.size} đơn PANCAKE`, 65, {
     getflyTotal: getflyOrders.size,
+    getflyLive: getflyOrders.size,
   });
 
   // Step 4: Load Getfly users

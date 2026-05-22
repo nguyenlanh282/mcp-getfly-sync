@@ -59,7 +59,7 @@ async function findOrderByCode(orderCode) {
  * Fetch ALL sale orders with PANCAKE prefix from Getfly (paginated).
  * Returns Map<orderCode, order>
  */
-async function getAllPancakeOrders() {
+async function getAllPancakeOrders(onProgress = null) {
   const allOrders = new Map();
   let offset = 0;
   const pageSize = 50;
@@ -74,7 +74,7 @@ async function getAllPancakeOrders() {
           fields: 'id,order_code,assigned_user,assigned_user_name,account_id,account_phone,contact_name,status,status_label',
           limit: pageSize,
           offset,
-          search: 'PANCAKE', // filter ngay từ API để giảm số lượng request cần xử lý
+          search: 'PANCAKE',
         },
       })
     );
@@ -89,15 +89,16 @@ async function getAllPancakeOrders() {
       }
     }
 
+    // Report progress after every page
+    if (onProgress) onProgress(allOrders.size, page + 1);
+
     if (!result.has_more) break;
     offset += pageSize;
 
-    // Log progress mỗi 10 pages
     if ((page + 1) % 10 === 0) {
       log.info(TAG, `  ...page ${page + 1}, ${allOrders.size} PANCAKE orders so far`);
     }
 
-    // Delay giữa các request
     await sleep(200);
   }
 

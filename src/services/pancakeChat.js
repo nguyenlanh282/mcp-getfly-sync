@@ -148,7 +148,7 @@ async function getMultipleConversations(conversationIds) {
  * Fetch conversations for a single time chunk.
  * Returns number of conversations added to results Map.
  */
-async function fetchConversationChunk(pageId, since, until, results, maxPages = 100) {
+async function fetchConversationChunk(pageId, since, until, results, maxPages = 100, onProgress = null) {
   let pageNumber = 1;
   let added = 0;
 
@@ -175,6 +175,9 @@ async function fetchConversationChunk(pageId, since, until, results, maxPages = 
       }
     }
 
+    // Report progress after every page
+    if (onProgress) onProgress(results.size);
+
     if (conversations.length < 50) break;
     pageNumber++;
 
@@ -195,14 +198,13 @@ async function fetchConversationChunk(pageId, since, until, results, maxPages = 
  * Pancake Chat API limits date range to < 1 month.
  * When syncAll (daysBack=0), we split into 30-day chunks going back 12 months.
  */
-async function getAllRecentConversations(daysBack = 2) {
+async function getAllRecentConversations(daysBack = 2, onProgress = null) {
   const pageId = config.pancakeChat.pageId;
   const syncAll = daysBack === 0;
   const results = new Map();
 
   if (syncAll) {
-    // API limit: date range < 1 month → split into 30-day chunks
-    const CHUNK_DAYS = 28; // safe margin under 1 month
+    const CHUNK_DAYS = 28;
     const TOTAL_MONTHS = 12;
     log.info(TAG, `Fetching ALL conversations (${TOTAL_MONTHS} monthly chunks)...`);
 
@@ -211,24 +213,22 @@ async function getAllRecentConversations(daysBack = 2) {
       const chunkStart = chunkEnd - CHUNK_DAYS * 86400;
       const monthLabel = i === 0 ? 'current month' : `${i} month(s) ago`;
 
-      const added = await fetchConversationChunk(pageId, chunkStart, chunkEnd, results, 100);
+      const added = await fetchConversationChunk(pageId, chunkStart, chunkEnd, results, 100, onProgress);
       log.info(TAG, `  Chunk "${monthLabel}": +${added} conversations (total: ${results.size})`);
 
-      // If a chunk returns 0 new conversations, older chunks likely empty too
       if (added === 0 && i > 0) {
         log.info(TAG, `  No more conversations found, stopping at chunk ${i + 1}`);
         break;
       }
     }
   } else {
-    // Normal mode: single range (guaranteed < 1 month for daysBack <= 28)
     const effectiveDays = Math.min(daysBack, 28);
     if (effectiveDays !== daysBack) {
       log.warn(TAG, `daysBack ${daysBack} exceeds API limit, clamped to ${effectiveDays}`);
     }
     const { since, until } = getTimeRange(effectiveDays);
     log.info(TAG, `Fetching all conversations (last ${effectiveDays} days)...`);
-    await fetchConversationChunk(pageId, since, until, results, 100);
+    await fetchConversationChunk(pageId, since, until, results, 100, onProgress);
   }
 
   log.info(TAG, `Fetched ${results.size} total conversations`);

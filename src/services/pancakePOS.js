@@ -82,13 +82,13 @@ function parseWebhookPayload(body) {
  * Fetch ALL recent orders from POS (last N days).
  * Paginates through results, stops when orders are older than cutoff.
  */
-async function getRecentOrders(daysBack = 2) {
+async function getRecentOrders(daysBack = 2, onProgress = null) {
   const shopId = config.pancakePOS.shopId;
   const syncAll = daysBack === 0;
   const cutoff = syncAll ? null : new Date(Date.now() - daysBack * 86400000);
   const allOrders = [];
   let pageNumber = 1;
-  const maxPages = 500; // cho phép paginate nhiều hơn khi sync all
+  const maxPages = 500;
 
   log.info(TAG, syncAll ? 'Fetching ALL orders...' : `Fetching recent orders (last ${daysBack} days)...`);
 
@@ -104,7 +104,6 @@ async function getRecentOrders(daysBack = 2) {
     if (orders.length === 0) break;
 
     if (syncAll) {
-      // Lấy tất cả, không check ngày
       allOrders.push(...orders);
     } else {
       let reachedCutoff = false;
@@ -119,6 +118,9 @@ async function getRecentOrders(daysBack = 2) {
       if (reachedCutoff) break;
     }
 
+    // Report progress after every page
+    if (onProgress) onProgress(allOrders.length, pageNumber);
+
     if (orders.length < 50) break;
     pageNumber++;
 
@@ -127,7 +129,6 @@ async function getRecentOrders(daysBack = 2) {
       log.info(TAG, `  ...page ${pageNumber}, ${allOrders.length} orders so far`);
     }
 
-    // Delay giữa các request để tránh rate limiting
     await sleep(300);
   }
 

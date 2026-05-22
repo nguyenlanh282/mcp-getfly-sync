@@ -285,11 +285,23 @@ function updateProgressDetails(progress) {
   };
 
   setStepVal('step-pos', 'fetching-pos',
-    () => d.posTotal !== undefined ? `${d.posRelevant || 0} / ${d.posTotal}` : null, '⏳ Fetching...');
+    () => {
+      if (d.posTotal !== undefined) return `${d.posRelevant || 0} / ${d.posTotal}`;
+      if (d.posLive !== undefined) return `${d.posLive.toLocaleString()}…`;
+      return null;
+    }, '⏳ Fetching...');
   setStepVal('step-chat', 'fetching-chat',
-    () => d.chatTotal !== undefined ? d.chatTotal.toLocaleString() : null, '⏳ Fetching...');
+    () => {
+      if (d.chatTotal !== undefined) return d.chatTotal.toLocaleString();
+      if (d.chatLive !== undefined) return `${d.chatLive.toLocaleString()}…`;
+      return null;
+    }, '⏳ Fetching...');
   setStepVal('step-getfly', 'fetching-getfly',
-    () => d.getflyTotal !== undefined ? d.getflyTotal.toLocaleString() : null, '⏳ Fetching...');
+    () => {
+      if (d.getflyTotal !== undefined) return d.getflyTotal.toLocaleString();
+      if (d.getflyLive !== undefined) return `${d.getflyLive.toLocaleString()}…`;
+      return null;
+    }, '⏳ Fetching...');
   setStepVal('step-compare', 'comparing',
     () => d.processed !== undefined ? `${d.processed}/${d.compareTotal || '?'} (${d.updated || 0} ✓)` : null, '⏳ Comparing...');
 }
