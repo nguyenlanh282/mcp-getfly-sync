@@ -36,7 +36,7 @@ async function findGetflyUser(pancakeStaffName, pancakeStaffEmail) {
   // Getfly users have: user_id, contact_name, user_name (email), email
   // Pancake Chat staff have: name, email
 
-  // 1. Match by email (most reliable)
+  // 1. Match by email strictly
   if (pancakeStaffEmail) {
     const emailLower = pancakeStaffEmail.toLowerCase();
     const match = users.find(
@@ -49,27 +49,7 @@ async function findGetflyUser(pancakeStaffName, pancakeStaffEmail) {
     }
   }
 
-  // 2. Match by name (case-insensitive, diacritics-insensitive)
-  if (pancakeStaffName) {
-    const normalized = normalizeVN(pancakeStaffName);
-
-    let match = users.find((u) => normalizeVN(u.contact_name) === normalized);
-
-    if (!match) {
-      match = users.find(
-        (u) =>
-          normalizeVN(u.contact_name).includes(normalized) ||
-          normalized.includes(normalizeVN(u.contact_name))
-      );
-    }
-
-    if (match) {
-      log.debug(TAG, `Matched by name: "${pancakeStaffName}" -> ${match.contact_name} (user_id: ${match.user_id})`);
-      return match;
-    }
-  }
-
-  log.warn(TAG, `No match found for: ${pancakeStaffName} / ${pancakeStaffEmail}`);
+  log.warn(TAG, `No match found for email: ${pancakeStaffEmail} (Name: ${pancakeStaffName})`);
   return null;
 }
 
