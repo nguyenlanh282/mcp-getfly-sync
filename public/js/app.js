@@ -269,9 +269,6 @@ function updateProgressDetails(progress) {
 
   // Step values — show ⏳ for active step, value when done, keep previous value if already set
   const d = progress.details || {};
-  const stepOrder = { 'fetching-pos': 0, 'fetching-chat': 1, 'fetching-getfly': 2, 'loading-users': 2, 'comparing': 3, 'done': 4, 'error': -1 };
-  const currentIdx = stepOrder[progress.step] ?? -1;
-
   const setStepVal = (elId, stepName, valueFn, loadingText = '⏳ Loading...') => {
     const el = document.getElementById(elId);
     if (!el) return;
