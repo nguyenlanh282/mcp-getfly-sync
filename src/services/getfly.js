@@ -49,10 +49,18 @@ async function getSaleOrders(params = {}) {
 }
 
 async function findOrderByCode(orderCode) {
-  // Search directly by order_code instead of fetching first 100
-  const result = await getSaleOrders({ search: orderCode, limit: 10 });
-  const orders = result.data || [];
-  return orders.find((o) => o.order_code === orderCode) || null;
+  // Search parameter in Getfly v6.1 no longer matches order_code.
+  // We fetch recent orders (up to 500) and find it locally.
+  let offset = 0;
+  for (let i = 0; i < 10; i++) {
+    const result = await getSaleOrders({ limit: 50, offset });
+    const orders = result.data || [];
+    const found = orders.find((o) => o.order_code === orderCode);
+    if (found) return found;
+    if (!result.has_more) break;
+    offset += 50;
+  }
+  return null;
 }
 
 /**
@@ -74,7 +82,6 @@ async function getAllPancakeOrders(onProgress = null) {
           fields: 'id,order_code,assigned_user,assigned_user_name,account_id,account_phone,contact_name,status,status_label',
           limit: pageSize,
           offset,
-          search: 'PANCAKE',
         },
       })
     );
