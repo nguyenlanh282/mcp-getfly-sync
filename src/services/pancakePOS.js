@@ -10,7 +10,7 @@ const client = axios.create({
   timeout: 30000,
 });
 
-// Retry helper with exponential backoff
+// Hàm gọi lại (retry) với thời gian chờ tăng dần
 async function withRetry(fn, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -51,12 +51,12 @@ function parseWebhookPayload(body) {
   const shopId = order.shop_id || config.pancakePOS.shopId;
   const orderId = order.system_id || order.id;
 
-  // Getfly order code format: PANCAKE-{shop_id}-{order_id}
+  // Định dạng mã đơn hàng Getfly: PANCAKE-{shop_id}-{order_id}
   const orderCode = order.display_id
     || order.order_code
     || (shopId && orderId ? `PANCAKE-${shopId}-${orderId}` : null);
 
-  // Extract customer phone from conversation or customer object
+  // Trích xuất số điện thoại khách hàng từ hội thoại hoặc đối tượng khách hàng
   const customer = order.customer || {};
   const phones = customer.phone_numbers || [];
 
@@ -79,8 +79,8 @@ function parseWebhookPayload(body) {
 }
 
 /**
- * Fetch ALL recent orders from POS (last N days).
- * Paginates through results, stops when orders are older than cutoff.
+ * Lấy TẤT CẢ các đơn hàng gần đây từ POS (trong N ngày qua).
+ * Phân trang qua các kết quả, dừng khi đơn hàng cũ hơn thời điểm cắt (cutoff).
  */
 async function getRecentOrders(daysBack = 2, onProgress = null) {
   const shopId = config.pancakePOS.shopId;
@@ -118,7 +118,7 @@ async function getRecentOrders(daysBack = 2, onProgress = null) {
       if (reachedCutoff) break;
     }
 
-    // Report progress after every page
+    // Báo cáo tiến độ sau mỗi trang
     if (onProgress) onProgress(allOrders.length, pageNumber);
 
     if (orders.length < 50) break;

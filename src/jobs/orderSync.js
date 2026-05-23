@@ -9,7 +9,7 @@ const log = require('../utils/logger');
 
 const TAG = 'OrderSync';
 
-// ── File paths ──
+// ── Đường dẫn file ──
 const DATA_DIR = path.join(__dirname, '../../data');
 const HISTORY_FILE = path.join(DATA_DIR, 'sync-history.json');
 const ORDERS_FILE = path.join(DATA_DIR, 'sync-orders.json');
@@ -19,7 +19,7 @@ function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// ── State tracking ──
+// ── Theo dõi trạng thái ──
 let syncHistory = [];
 const MAX_HISTORY = 100;
 let lastSyncOrders = [];
@@ -29,7 +29,7 @@ let syncInterval = null;   // declared early so getStatus() can safely reference
 let currentInterval = null;
 let currentDays = null;
 
-// ── Sync Progress Tracking ──
+// ── Theo dõi tiến trình đồng bộ ──
 let syncProgress = {
   active: false,
   step: 'idle',
@@ -54,7 +54,7 @@ function getProgress() {
   return { ...syncProgress };
 }
 
-// ── Persistence: Load ──
+// ── Lưu trữ: Tải dữ liệu ──
 function loadState() {
   ensureDir();
   try {
@@ -89,7 +89,7 @@ function loadState() {
   }
 }
 
-// ── Persistence: Save ──
+// ── Lưu trữ: Lưu dữ liệu ──
 function saveHistory() {
   try {
     ensureDir();
@@ -118,11 +118,11 @@ function saveUnmapped() {
   }
 }
 
-// ── Init: load saved state ──
+// ── Khởi tạo: tải trạng thái đã lưu ──
 loadState();
 
 /**
- * Main sync: POS orders → Chat assignees → Getfly update
+ * Đồng bộ chính: Đơn hàng POS → Người phân công Chat → Cập nhật Getfly
  */
 async function syncAssignments(daysBack = 2) {
   const startTime = Date.now();
@@ -133,13 +133,13 @@ async function syncAssignments(daysBack = 2) {
   const syncOrders = [];
   const newUnmapped = new Map();
 
-  // Step 1: Fetch recent POS orders
+  // Bước 1: Lấy các đơn hàng POS gần đây
   updateProgress('fetching-pos', 'Đang tải đơn hàng từ Pancake POS...', 5);
   const posOrders = await pancakePOS.getRecentOrders(daysBack, (count) => {
     updateProgress('fetching-pos', `Đang tải POS... ${count.toLocaleString()} đơn`, 5, { posLive: count });
   });
 
-  // Filter to our page's conversations
+  // Lọc các cuộc hội thoại thuộc trang của chúng ta
   const pageId = config.pancakeChat.pageId;
   const relevantOrders = posOrders.filter(
     (o) => o.conversation_id && o.conversation_id.startsWith(pageId + '_')
@@ -159,7 +159,7 @@ async function syncAssignments(daysBack = 2) {
     return result;
   }
 
-  // Step 2: Fetch all recent Chat conversations
+  // Bước 2: Lấy tất cả các cuộc hội thoại Chat gần đây
   updateProgress('fetching-chat', 'Đang tải hội thoại từ Pancake Chat...', 20);
   const chatAssignments = await pancakeChat.getAllRecentConversations(daysBack, (count) => {
     updateProgress('fetching-chat', `Đang tải Chat... ${count.toLocaleString()} hội thoại`, 20, { chatLive: count });
@@ -170,7 +170,7 @@ async function syncAssignments(daysBack = 2) {
     chatLive: chatAssignments.size,
   });
 
-  // Step 3: Fetch all PANCAKE orders from Getfly
+  // Bước 3: Lấy tất cả đơn hàng PANCAKE từ Getfly
   updateProgress('fetching-getfly', 'Đang tải đơn PANCAKE từ Getfly CRM...', 50);
   const getflyOrders = await getfly.getAllPancakeOrders((count) => {
     updateProgress('fetching-getfly', `Đang tải Getfly... ${count.toLocaleString()} đơn`, 50, { getflyLive: count });
@@ -181,11 +181,11 @@ async function syncAssignments(daysBack = 2) {
     getflyLive: getflyOrders.size,
   });
 
-  // Step 4: Load Getfly users
+  // Bước 4: Tải danh sách người dùng Getfly
   updateProgress('loading-users', 'Đang tải danh sách nhân viên Getfly...', 70);
   await staffMapper.loadGetflyUsers();
 
-  // Step 5: Compare and update
+  // Bước 5: So sánh và cập nhật
   updateProgress('comparing', `Đang so sánh ${relevantOrders.length} đơn...`, 75);
   let updated = 0;
   let errors = 0;
@@ -209,7 +209,7 @@ async function syncAssignments(daysBack = 2) {
     const chatConv = chatAssignments.get(convId);
     const gfOrder = getflyOrders.get(orderCode);
 
-    // Build order record
+    // Tạo bản ghi đơn hàng
     const orderRecord = {
       orderCode,
       systemId: posOrder.system_id,
@@ -240,13 +240,13 @@ async function syncAssignments(daysBack = 2) {
         continue;
       }
 
-      // Map Chat assignee to Getfly user
+      // Ánh xạ người phân công Chat với người dùng Getfly
       const getflyUser = await staffMapper.findGetflyUser(chatConv.assigneeName, chatConv.assigneeEmail);
       if (!getflyUser) {
         orderRecord.status = 'unmapped-staff';
         skipped++;
 
-        // Track unmapped staff
+        // Theo dõi nhân viên chưa được ánh xạ
         const key = chatConv.assigneeEmail || chatConv.assigneeName;
         const existing = newUnmapped.get(key) || {
           name: chatConv.assigneeName,
@@ -263,18 +263,18 @@ async function syncAssignments(daysBack = 2) {
       orderRecord.mappedGetflyUser = getflyUser.contact_name;
       orderRecord.mappedGetflyUserId = getflyUser.user_id;
 
-      // Check if already correct
+      // Kiểm tra xem đã chính xác chưa
       if (gfOrder.assigned_user === getflyUser.user_id) {
         orderRecord.status = 'synced';
         syncOrders.push(orderRecord);
         continue;
       }
 
-      // Update order
+      // Cập nhật đơn hàng
       log.info(TAG, `Updating ${orderCode}: ${gfOrder.assigned_user_name || 'N/A'} -> ${getflyUser.contact_name} (Chat: ${chatConv.assigneeName})`);
       await getfly.assignOrderToUser(orderCode, getflyUser.user_id);
 
-      // Update account manager
+      // Cập nhật người quản lý tài khoản
       try {
         let accountId = gfOrder.account_id;
         if (!accountId && gfOrder.account_phone) {
@@ -306,7 +306,7 @@ async function syncAssignments(daysBack = 2) {
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   log.info(TAG, `=== Sync complete in ${elapsed}s: ${relevantOrders.length} checked, ${updated} updated, ${skipped} skipped, ${errors} errors ===`);
 
-  // Final progress
+  // Tiến trình cuối cùng
   updateProgress('done', `Hoàn tất! ${updated} cập nhật, ${errors} lỗi (${elapsed}s)`, 100, {
     processed: relevantOrders.length,
     compareTotal: relevantOrders.length,
@@ -326,7 +326,7 @@ async function syncAssignments(daysBack = 2) {
     elapsed: `${elapsed}s`,
   };
 
-  // Save state to memory + disk
+  // Lưu trạng thái vào bộ nhớ + ổ đĩa
   pushHistory(result);
   lastSyncOrders = syncOrders;
   unmappedStaff = newUnmapped;
@@ -344,7 +344,7 @@ function pushHistory(result) {
   saveHistory();
 }
 
-// ── Public state getters ──
+// ── Các hàm lấy trạng thái công khai ──
 
 function getStatus() {
   return {
@@ -366,7 +366,7 @@ function getOrders(options = {}) {
   let orders = [...lastSyncOrders];
   const { search, status, page = 1, pageSize = 20 } = options;
 
-  // Filter
+  // Lọc
   if (search) {
     const q = search.toLowerCase();
     orders = orders.filter(
@@ -383,7 +383,7 @@ function getOrders(options = {}) {
     orders = orders.filter((o) => o.status === status);
   }
 
-  // Stats
+  // Thống kê
   const stats = {
     total: lastSyncOrders.length,
     synced: lastSyncOrders.filter((o) => o.status === 'synced').length,
@@ -394,7 +394,7 @@ function getOrders(options = {}) {
     errors: lastSyncOrders.filter((o) => o.status === 'error').length,
   };
 
-  // Paginate
+  // Phân trang
   const totalFiltered = orders.length;
   const start = (page - 1) * pageSize;
   const paged = orders.slice(start, start + pageSize);
@@ -418,8 +418,8 @@ function getUnmappedStaff() {
   return Array.from(unmappedStaff.values()).sort((a, b) => b.orderCount - a.orderCount);
 }
 
-// ── Scheduler ──
-// (syncInterval already declared at top of module)
+// ── Trình lên lịch ──
+// (syncInterval đã được khai báo ở đầu module)
 
 function start(intervalMs, daysBack = 2) {
   if (syncInterval) return;
@@ -444,7 +444,7 @@ async function runSync(daysBack) {
     syncProgress = { active: false, step: 'error', message: `Lỗi: ${err.message}`, percent: 0, startedAt: null, details: {} };
   } finally {
     isRunning = false;
-    // Keep progress visible for 10s after completion, then reset
+    // Giữ tiến trình hiển thị trong 10s sau khi hoàn thành, sau đó đặt lại
     setTimeout(() => {
       if (!isRunning) {
         syncProgress = { active: false, step: 'idle', message: 'Chờ lệnh...', percent: 0, startedAt: null, details: {} };

@@ -12,7 +12,7 @@ const log = require('../utils/logger');
 const router = express.Router();
 const ENV_PATH = path.join(__dirname, '../../.env');
 
-// ── Dashboard ──
+// ── Bảng tổng quan (Dashboard) ──
 router.get('/dashboard', (req, res) => {
   const sync = orderSync.getStatus();
   const ordersData = orderSync.getOrders({ pageSize: 99999 });
@@ -26,7 +26,7 @@ router.get('/dashboard', (req, res) => {
   });
 });
 
-// ── Orders ──
+// ── Đơn hàng (Orders) ──
 router.get('/orders', (req, res) => {
   const { search, status, page = 1, pageSize = 20 } = req.query;
   const result = orderSync.getOrders({
@@ -38,7 +38,7 @@ router.get('/orders', (req, res) => {
   res.json(result);
 });
 
-// ── Staff Mapping ──
+// ── Ánh xạ nhân viên ──
 router.get('/staff', async (req, res) => {
   try {
     const getflyUsers = await staffMapper.loadGetflyUsers();
@@ -58,7 +58,7 @@ router.get('/staff', async (req, res) => {
   }
 });
 
-// ── Sync ──
+// ── Đồng bộ (Sync) ──
 router.get('/sync/status', (req, res) => {
   res.json(orderSync.getStatus());
 });
@@ -77,18 +77,18 @@ router.post('/sync/trigger', async (req, res) => {
   const days = req.body?.days !== undefined ? parseInt(req.body.days) : (parseInt(req.query.days) || config.orderSyncDays);
   res.json({ message: 'Sync started', days });
 
-  // Run via runSync() to properly manage isRunning flag
+  // Chạy qua runSync() để quản lý cờ isRunning đúng cách
   orderSync.runSync(days).catch((err) => {
     log.error('API', 'Manual sync failed:', { error: err.message });
   });
 });
 
-// ── Sync Progress ──
+// ── Tiến trình đồng bộ ──
 router.get('/sync/progress', (req, res) => {
   res.json(orderSync.getProgress());
 });
 
-// ── Process Control: Scheduler ──
+// ── Quản lý tiến trình: Trình lên lịch ──
 router.post('/scheduler/start', (req, res) => {
   if (orderSync.isSchedulerRunning()) {
     return res.json({ message: 'Scheduler already running', active: true });
@@ -106,7 +106,7 @@ router.post('/scheduler/stop', (req, res) => {
   res.json({ message: 'Scheduler stopped', active: false });
 });
 
-// ── Process Control: Chat Poller ──
+// ── Quản lý tiến trình: Trình kiểm tra Chat ──
 router.post('/poller/start', (req, res) => {
   const status = chatPoller.getStatus();
   if (status.active) {
@@ -124,7 +124,7 @@ router.post('/poller/stop', (req, res) => {
   res.json({ message: 'Poller stopped', active: false });
 });
 
-// ── All Processes Status ──
+// ── Trạng thái tất cả tiến trình ──
 router.get('/processes', (req, res) => {
   const syncStatus = orderSync.getStatus();
   const pollerStatus = chatPoller.getStatus();
@@ -148,7 +148,7 @@ router.get('/processes', (req, res) => {
   });
 });
 
-// ── Config (full settings) ──
+// ── Cài đặt (toàn bộ cấu hình) ──
 router.get('/config', (req, res) => {
   res.json({
     // Sync settings
@@ -179,12 +179,12 @@ router.get('/config', (req, res) => {
   });
 });
 
-// Full config update
+// Cập nhật toàn bộ cài đặt
 router.put('/config', (req, res) => {
   const updates = req.body;
   const envUpdates = {};
 
-  // Sync settings
+  // Cài đặt đồng bộ
   if (updates.syncInterval !== undefined) {
     const ms = parseInt(updates.syncInterval);
     if (ms < 60000) return res.status(400).json({ error: 'Minimum sync interval: 60 seconds' });
@@ -248,7 +248,7 @@ router.put('/config', (req, res) => {
     envUpdates.WEBHOOK_SECRET = updates.webhookSecret;
   }
 
-  // Persist to .env file
+  // Lưu vào file .env
   if (Object.keys(envUpdates).length > 0) {
     try {
       updateEnvFile(envUpdates);
@@ -258,13 +258,13 @@ router.put('/config', (req, res) => {
     }
   }
 
-  // Restart sync with new config
+  // Khởi động lại đồng bộ với cấu hình mới
   orderSync.updateConfig(config.orderSyncInterval, config.orderSyncDays);
 
   res.json({ message: 'Config updated', keys: Object.keys(envUpdates) });
 });
 
-// Test connection endpoints
+// Các endpoint kiểm tra kết nối
 router.post('/config/test-pancake-pos', async (req, res) => {
   try {
     const axios = require('axios');
@@ -310,11 +310,11 @@ router.post('/config/test-getfly', async (req, res) => {
   }
 });
 
-// Change admin password
+// Đổi mật khẩu admin
 router.post('/config/change-password', (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
-  // Support both plain-text (legacy) and bcrypt hashed passwords
+  // Hỗ trợ cả mật khẩu văn bản thuần (cũ) và mật khẩu đã băm bcrypt
   const isHashed = config.admin.pass.startsWith('$2');
   const currentMatch = isHashed
     ? bcrypt.compareSync(currentPassword, config.admin.pass)
@@ -337,14 +337,14 @@ router.post('/config/change-password', (req, res) => {
   res.json({ success: true, message: 'Password changed' });
 });
 
-// ── Logs ──
+// ── Nhật ký hệ thống (Logs) ──
 router.get('/logs', (req, res) => {
   const limit = parseInt(req.query.limit) || 100;
   const filter = req.query.filter || null;
   res.json(log.getRecentLogs(limit, filter));
 });
 
-// ── SSE for real-time updates ──
+// ── SSE cập nhật thời gian thực ──
 router.get('/events', (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -358,7 +358,7 @@ router.get('/events', (req, res) => {
     const data = {
       sync: syncStatus,
       poller: pollerStatus,
-      // Use getStats() instead of scanning all orders for performance
+      // Dùng getStats() thay vì quét tất cả đơn hàng để tối ưu hiệu suất
       stats: orderSync.getStats(),
       progress: syncStatus.progress,
       server: {
@@ -375,7 +375,7 @@ router.get('/events', (req, res) => {
   req.on('close', () => clearInterval(interval));
 });
 
-// ── Helpers ──
+// ── Các hàm hỗ trợ ──
 function maskKey(key) {
   if (!key) return '';
   if (key.length <= 8) return '***';

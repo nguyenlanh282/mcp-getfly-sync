@@ -14,14 +14,14 @@ const log = require('./utils/logger');
 const TAG = 'Server';
 const app = express();
 
-// Trust reverse proxy (Cloudflare, Nginx, Traefik)
+// Tin cậy reverse proxy (Cloudflare, Nginx, Traefik)
 app.set('trust proxy', 1);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Simple file-based session store (no extra dependency needed)
-// Replaces MemoryStore to avoid memory leak in production
+// Cửa hàng phiên dựa trên tệp đơn giản (không cần thư viện phụ thuộc thêm)
+// Thay thế MemoryStore để tránh rò rỉ bộ nhớ trong môi trường production
 function createFileSessionStore(SessionStore) {
   const SESSION_DIR = path.join(__dirname, '../data/sessions');
   if (!fs.existsSync(SESSION_DIR)) fs.mkdirSync(SESSION_DIR, { recursive: true });
@@ -57,7 +57,7 @@ function createFileSessionStore(SessionStore) {
   return new FileStore();
 }
 
-// Session middleware
+// Middleware quản lý phiên
 app.use(
   session({
     secret: config.sessionSecret,
@@ -78,7 +78,7 @@ app.use('/auth', authRouter);
 // Webhook routes - xác thực bằng webhook secret riêng, không cần session
 app.use('/webhook', webhookRouter);
 
-// Health check - public
+// Kiểm tra tình trạng (Health check) - công khai
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
@@ -98,7 +98,7 @@ function requireAuth(req, res, next) {
 
 app.use(requireAuth);
 
-// Static files (dashboard) - sau auth middleware, no cache for dev
+// Các tệp tĩnh (dashboard) - sau auth middleware, không lưu cache cho dev
 app.use(express.static(path.join(__dirname, '../public'), {
   etag: false,
   maxAge: 0,
@@ -107,10 +107,10 @@ app.use(express.static(path.join(__dirname, '../public'), {
   },
 }));
 
-// API routes (dashboard)
+// Các route API (dashboard)
 app.use('/api', apiRouter);
 
-// Status endpoint
+// Endpoint trạng thái
 app.get('/status', async (req, res) => {
   try {
     const users = await staffMapper.loadGetflyUsers();
@@ -130,7 +130,7 @@ app.get('/status', async (req, res) => {
 });
 
 async function start() {
-  // Validate required config
+  // Xác thực các cấu hình bắt buộc
   const missing = [];
   if (!config.pancakePOS.apiKey) missing.push('PANCAKE_POS_API_KEY');
   if (!config.pancakePOS.shopId) missing.push('PANCAKE_SHOP_ID');
@@ -152,7 +152,7 @@ async function start() {
   // Auto-start chỉ khi SYNC_AUTO_START=true được set rõ ràng
   if (process.env.SYNC_AUTO_START === 'true') {
     log.info(TAG, 'SYNC_AUTO_START=true — starting scheduler and poller automatically...');
-    // Pre-load Getfly users for staff mapping
+    // Tải trước người dùng Getfly để ánh xạ nhân viên
     await staffMapper.loadGetflyUsers().catch((err) => {
       log.warn(TAG, 'Could not pre-load Getfly users:', { error: err.message });
     });

@@ -9,7 +9,7 @@ const client = axios.create({
   timeout: 30000,
 });
 
-// Retry helper with exponential backoff
+// Hàm gọi lại (retry) với thời gian chờ tăng dần
 async function withRetry(fn, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -145,8 +145,8 @@ async function getMultipleConversations(conversationIds) {
 }
 
 /**
- * Fetch conversations for a single time chunk.
- * Returns number of conversations added to results Map.
+ * Lấy các cuộc hội thoại cho một khoảng thời gian nhất định.
+ * Trả về số lượng cuộc hội thoại được thêm vào Map kết quả.
  */
 async function fetchConversationChunk(pageId, since, until, results, maxPages = 100, onProgress = null) {
   let pageNumber = 1;
@@ -175,7 +175,7 @@ async function fetchConversationChunk(pageId, since, until, results, maxPages = 
       }
     }
 
-    // Report progress after every page
+    // Báo cáo tiến độ sau mỗi trang
     if (onProgress) onProgress(results.size);
 
     if (conversations.length < 50) break;
@@ -192,11 +192,11 @@ async function fetchConversationChunk(pageId, since, until, results, maxPages = 
 }
 
 /**
- * Fetch ALL conversations from last N days.
- * Returns Map<conversationId, assignment>
+ * Lấy TẤT CẢ các cuộc hội thoại từ N ngày qua.
+ * Trả về Map<conversationId, assignment>
  *
- * Pancake Chat API limits date range to < 1 month.
- * When syncAll (daysBack=0), we split into 30-day chunks going back 12 months.
+ * Pancake Chat API giới hạn phạm vi ngày < 1 tháng.
+ * Khi syncAll (daysBack=0), chúng tôi chia thành các khoảng 30 ngày lùi về 12 tháng.
  */
 async function getAllRecentConversations(daysBack = 2, onProgress = null) {
   const pageId = config.pancakeChat.pageId;

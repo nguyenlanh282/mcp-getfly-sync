@@ -13,7 +13,7 @@ const client = axios.create({
   },
 });
 
-// Retry helper with exponential backoff
+// Hàm gọi lại (retry) với thời gian chờ tăng dần
 async function withRetry(fn, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -49,8 +49,8 @@ async function getSaleOrders(params = {}) {
 }
 
 async function findOrderByCode(orderCode) {
-  // Search parameter in Getfly v6.1 no longer matches order_code.
-  // We fetch recent orders (up to 500) and find it locally.
+  // Tham số tìm kiếm trong Getfly v6.1 không còn khớp với order_code.
+  // Chúng tôi tải các đơn hàng gần đây (lên đến 500) và tìm kiếm cục bộ.
   let offset = 0;
   for (let i = 0; i < 10; i++) {
     const result = await getSaleOrders({ limit: 50, offset });
@@ -64,8 +64,8 @@ async function findOrderByCode(orderCode) {
 }
 
 /**
- * Fetch ALL sale orders with PANCAKE prefix from Getfly (paginated).
- * Returns Map<orderCode, order>
+ * Lấy TẤT CẢ đơn hàng bán có tiền tố PANCAKE từ Getfly (có phân trang).
+ * Trả về Map<orderCode, order>
  */
 async function getAllPancakeOrders(onProgress = null) {
   const allOrders = new Map();
@@ -96,7 +96,7 @@ async function getAllPancakeOrders(onProgress = null) {
       }
     }
 
-    // Report progress after every page
+    // Báo cáo tiến độ sau mỗi trang
     if (onProgress) onProgress(allOrders.size, page + 1);
 
     if (!result.has_more) break;

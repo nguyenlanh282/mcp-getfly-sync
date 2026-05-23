@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pancake ↔ Getfly Sync</title>
+  <title>Đồng bộ Pancake ↔ Getfly</title>
   <link rel="stylesheet" href="/css/style.css?v=5">
 </head>
 <body>
@@ -11,26 +11,26 @@
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <h1>&#x1F95E; Sync Panel</h1>
+    <h1>&#x1F95E; Bảng điều khiển</h1>
     <div class="subtitle">Pancake POS &middot; Chat &middot; Getfly</div>
   </div>
   <nav class="sidebar-nav">
     <a class="nav-item active" data-page="dashboard">
-      <span class="icon">&#x1F4CA;</span> Dashboard
+      <span class="icon">&#x1F4CA;</span> Bảng tổng quan
     </a>
     <a class="nav-item" data-page="orders">
-      <span class="icon">&#x1F4E6;</span> Orders
+      <span class="icon">&#x1F4E6;</span> Đơn hàng
       <span class="badge" id="nav-orders-badge" style="display:none">0</span>
     </a>
     <a class="nav-item" data-page="staff">
-      <span class="icon">&#x1F465;</span> Staff Mapping
+      <span class="icon">&#x1F465;</span> Ánh xạ nhân viên
       <span class="badge" id="nav-staff-badge" style="display:none">0</span>
     </a>
     <a class="nav-item" data-page="settings">
-      <span class="icon">&#x2699;&#xFE0F;</span> Settings
+      <span class="icon">&#x2699;&#xFE0F;</span> Cài đặt
     </a>
     <a class="nav-item" data-page="logs">
-      <span class="icon">&#x1F4DC;</span> Logs
+      <span class="icon">&#x1F4DC;</span> Nhật ký hệ thống
     </a>
   </nav>
   <div class="sidebar-footer">
@@ -41,10 +41,10 @@
     </div>
     <div class="sync-indicator">
       <span class="sync-dot" id="sync-dot"></span>
-      <span id="sync-status-text">Idle</span>
+      <span id="sync-status-text">Đang rảnh</span>
     </div>
-    <button class="btn-logout" onclick="logout()" title="Logout">
-      &#x1F6AA; Logout
+    <button class="btn-logout" onclick="logout()" title="Đăng xuất">
+      &#x1F6AA; Đăng xuất
     </button>
   </div>
 </aside>
@@ -56,17 +56,17 @@
   <!-- DASHBOARD -->
   <section class="page active" id="page-dashboard">
     <div class="topbar">
-      <h2>Dashboard</h2>
+      <h2>Bảng tổng quan</h2>
       <div class="topbar-actions">
-        <select id="sync-days-select" title="Days to sync">
-          <option value="0">All (12 months)</option>
-          <option value="1">1 day</option>
-          <option value="2" selected>2 days</option>
-          <option value="7">7 days</option>
-          <option value="14">14 days</option>
-          <option value="28">28 days</option>
+        <select id="sync-days-select" title="Số ngày đồng bộ">
+          <option value="0">Tất cả (12 tháng)</option>
+          <option value="1">1 ngày</option>
+          <option value="2" selected>2 ngày</option>
+          <option value="7">7 ngày</option>
+          <option value="14">14 ngày</option>
+          <option value="28">28 ngày</option>
         </select>
-        <button class="btn btn-primary" id="btn-sync-now" onclick="triggerSync()">&#x1F504; Sync Now</button>
+        <button class="btn btn-primary" id="btn-sync-now" onclick="triggerSync()">&#x1F504; Đồng bộ ngay</button>
       </div>
     </div>
     <div class="content">
@@ -74,8 +74,8 @@
       <!-- Process Control Panel -->
       <div class="process-panel">
         <div class="process-header">
-          <h3>&#x2699;&#xFE0F; Process Control</h3>
-          <span class="process-subtitle">Manage sync processes from here</span>
+          <h3>&#x2699;&#xFE0F; Quản lý tiến trình</h3>
+          <span class="process-subtitle">Quản lý các tiến trình đồng bộ tại đây</span>
         </div>
         <div class="process-grid">
           <!-- Order Sync Scheduler -->
@@ -84,8 +84,8 @@
               <div class="process-info">
                 <span class="process-icon">&#x23F0;</span>
                 <div>
-                  <div class="process-name">Order Sync Scheduler</div>
-                  <div class="process-desc" id="scheduler-desc">Auto sync every 5 min</div>
+                  <div class="process-name">Trình lên lịch đồng bộ đơn hàng</div>
+                  <div class="process-desc" id="scheduler-desc">Tự động đồng bộ mỗi 5 phút</div>
                 </div>
               </div>
               <label class="toggle-switch">
@@ -94,7 +94,7 @@
               </label>
             </div>
             <div class="process-status" id="scheduler-status">
-              <span class="status-dot off"></span> Stopped
+              <span class="status-dot off"></span> Đã dừng
             </div>
           </div>
 
@@ -104,8 +104,8 @@
               <div class="process-info">
                 <span class="process-icon">&#x1F4AC;</span>
                 <div>
-                  <div class="process-name">Chat Assignment Poller</div>
-                  <div class="process-desc" id="poller-desc">Check changes every 30s</div>
+                  <div class="process-name">Trình kiểm tra phân công Chat</div>
+                  <div class="process-desc" id="poller-desc">Kiểm tra thay đổi mỗi 30s</div>
                 </div>
               </div>
               <label class="toggle-switch">
@@ -114,7 +114,7 @@
               </label>
             </div>
             <div class="process-status" id="poller-status">
-              <span class="status-dot off"></span> Stopped
+              <span class="status-dot off"></span> Đã dừng
             </div>
           </div>
         </div>
@@ -123,63 +123,63 @@
       <!-- Sync Progress -->
       <div class="panel progress-panel" id="sync-progress-panel" style="display:none">
         <div class="panel-header">
-          <h3>&#x26A1; Sync Progress</h3>
+          <h3>&#x26A1; Tiến trình đồng bộ</h3>
           <span class="progress-elapsed" id="progress-elapsed"></span>
         </div>
         <div class="panel-body padded">
           <div class="progress-steps">
             <div class="progress-step" data-step="fetching-pos">
               <span class="step-icon">&#x1F4E6;</span>
-              <span class="step-label">POS Orders</span>
+              <span class="step-label">Đơn hàng POS</span>
               <span class="step-value" id="step-pos">-</span>
             </div>
             <div class="progress-step" data-step="fetching-chat">
               <span class="step-icon">&#x1F4AC;</span>
-              <span class="step-label">Chat Conversations</span>
+              <span class="step-label">Hội thoại Chat</span>
               <span class="step-value" id="step-chat">-</span>
             </div>
             <div class="progress-step" data-step="fetching-getfly">
               <span class="step-icon">&#x1F4BC;</span>
-              <span class="step-label">Getfly Orders</span>
+              <span class="step-label">Đơn hàng Getfly</span>
               <span class="step-value" id="step-getfly">-</span>
             </div>
             <div class="progress-step" data-step="comparing">
               <span class="step-icon">&#x1F50D;</span>
-              <span class="step-label">Compare & Update</span>
+              <span class="step-label">So sánh & Cập nhật</span>
               <span class="step-value" id="step-compare">-</span>
             </div>
           </div>
           <div class="progress-bar-container">
             <div class="progress-bar" id="sync-progress-bar" style="width:0%"></div>
           </div>
-          <div class="progress-message" id="sync-progress-message">Initializing...</div>
+          <div class="progress-message" id="sync-progress-message">Đang khởi tạo...</div>
         </div>
       </div>
 
       <!-- Stats Cards -->
       <div class="stats-grid">
-        <div class="stat-card"><div class="label">Total Orders</div><div class="value" id="stat-total">-</div></div>
-        <div class="stat-card success"><div class="label">Synced</div><div class="value" id="stat-synced">-</div></div>
-        <div class="stat-card info"><div class="label">Updated</div><div class="value" id="stat-updated">-</div></div>
-        <div class="stat-card warning"><div class="label">Unmapped Staff</div><div class="value" id="stat-unmapped">-</div></div>
-        <div class="stat-card"><div class="label">Not on Getfly</div><div class="value" id="stat-notgetfly">-</div></div>
-        <div class="stat-card error"><div class="label">Errors</div><div class="value" id="stat-errors">-</div></div>
+        <div class="stat-card"><div class="label">Tổng đơn hàng</div><div class="value" id="stat-total">-</div></div>
+        <div class="stat-card success"><div class="label">Đã đồng bộ</div><div class="value" id="stat-synced">-</div></div>
+        <div class="stat-card info"><div class="label">Đã cập nhật</div><div class="value" id="stat-updated">-</div></div>
+        <div class="stat-card warning"><div class="label">Chưa ánh xạ NV</div><div class="value" id="stat-unmapped">-</div></div>
+        <div class="stat-card"><div class="label">Không có trên Getfly</div><div class="value" id="stat-notgetfly">-</div></div>
+        <div class="stat-card error"><div class="label">Lỗi</div><div class="value" id="stat-errors">-</div></div>
       </div>
 
       <!-- Last Sync + History -->
       <div class="panel">
         <div class="panel-header">
-          <h3>Last Sync</h3>
-          <span id="last-sync-time" style="font-size:12px;color:var(--text-secondary)">Never</span>
+          <h3>Đồng bộ lần cuối</h3>
+          <span id="last-sync-time" style="font-size:12px;color:var(--text-secondary)">Chưa từng</span>
         </div>
         <div class="panel-body padded" id="last-sync-info">
-          <div class="empty-state"><p>No sync data yet. Click "Sync Now" to start.</p></div>
+          <div class="empty-state"><p>Chưa có dữ liệu đồng bộ. Nhấp "Đồng bộ ngay" để bắt đầu.</p></div>
         </div>
       </div>
       <div class="panel">
-        <div class="panel-header"><h3>Sync History</h3></div>
+        <div class="panel-header"><h3>Lịch sử đồng bộ</h3></div>
         <div class="panel-body" id="sync-history-body">
-          <div class="empty-state"><p>No sync history</p></div>
+          <div class="empty-state"><p>Không có lịch sử đồng bộ</p></div>
         </div>
       </div>
     </div>
@@ -188,42 +188,42 @@
   <!-- ORDERS -->
   <section class="page" id="page-orders">
     <div class="topbar">
-      <h2>Orders</h2>
+      <h2>Đơn hàng</h2>
       <div class="topbar-actions">
-        <button class="btn btn-secondary btn-sm" onclick="refreshOrders()">&#x1F504; Refresh</button>
+        <button class="btn btn-secondary btn-sm" onclick="refreshOrders()">&#x1F504; Làm mới</button>
       </div>
     </div>
     <div class="content">
       <div class="filter-bar">
         <div class="search-bar">
           <span class="search-icon">&#x1F50D;</span>
-          <input type="text" id="order-search" placeholder="Search order, customer, staff..." oninput="debounceSearch()">
+          <input type="text" id="order-search" placeholder="Tìm kiếm đơn hàng, khách hàng, nhân viên..." oninput="debounceSearch()">
         </div>
         <select id="order-status-filter" onchange="refreshOrders()">
-          <option value="all">All Status</option>
-          <option value="synced">Synced</option>
-          <option value="updated">Updated</option>
-          <option value="unmapped-staff">Unmapped Staff</option>
-          <option value="not-on-getfly">Not on Getfly</option>
-          <option value="no-chat-assignee">No Chat Assignee</option>
-          <option value="error">Error</option>
+          <option value="all">Tất cả trạng thái</option>
+          <option value="synced">Đã đồng bộ</option>
+          <option value="updated">Đã cập nhật</option>
+          <option value="unmapped-staff">Chưa ánh xạ NV</option>
+          <option value="not-on-getfly">Không có trên Getfly</option>
+          <option value="no-chat-assignee">Không có NV Chat</option>
+          <option value="error">Lỗi</option>
         </select>
       </div>
       <div class="panel">
         <div class="panel-body">
           <div class="table-wrapper">
             <table>
-              <thead><tr><th>Order Code</th><th>Customer</th><th>Phone</th><th>Chat Assignee</th><th>Getfly Assignee</th><th>Status</th></tr></thead>
+              <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>SĐT</th><th>NV Chat</th><th>NV Getfly</th><th>Trạng thái</th></tr></thead>
               <tbody id="orders-tbody">
-                <tr><td colspan="6" class="empty-state"><p>No data. Run a sync first.</p></td></tr>
+                <tr><td colspan="6" class="empty-state"><p>Không có dữ liệu. Vui lòng chạy đồng bộ trước.</p></td></tr>
               </tbody>
             </table>
           </div>
           <div class="pagination" id="orders-pagination" style="display:none">
-            <span id="orders-page-info">Page 1</span>
+            <span id="orders-page-info">Trang 1</span>
             <div class="pagination-buttons">
-              <button class="btn btn-secondary btn-sm" id="btn-prev" onclick="changePage(-1)">&#x25C0; Prev</button>
-              <button class="btn btn-secondary btn-sm" id="btn-next" onclick="changePage(1)">Next &#x25B6;</button>
+              <button class="btn btn-secondary btn-sm" id="btn-prev" onclick="changePage(-1)">&#x25C0; Trước</button>
+              <button class="btn btn-secondary btn-sm" id="btn-next" onclick="changePage(1)">Sau &#x25B6;</button>
             </div>
           </div>
         </div>
@@ -234,30 +234,30 @@
   <!-- STAFF MAPPING -->
   <section class="page" id="page-staff">
     <div class="topbar">
-      <h2>Staff Mapping</h2>
+      <h2>Ánh xạ nhân viên</h2>
       <div class="topbar-actions">
-        <button class="btn btn-secondary btn-sm" onclick="refreshStaff()">&#x1F504; Refresh</button>
+        <button class="btn btn-secondary btn-sm" onclick="refreshStaff()">&#x1F504; Làm mới</button>
       </div>
     </div>
     <div class="content">
       <div class="panel">
-        <div class="panel-header"><h3>&#x26A0;&#xFE0F; Unmapped Staff (Pancake Chat &rarr; Getfly)</h3></div>
+        <div class="panel-header"><h3>&#x26A0;&#xFE0F; Nhân viên chưa ánh xạ (Pancake Chat &rarr; Getfly)</h3></div>
         <div class="panel-body">
           <div class="table-wrapper">
             <table>
-              <thead><tr><th>Pancake Name</th><th>Email</th><th>Orders Affected</th></tr></thead>
-              <tbody id="unmapped-tbody"><tr><td colspan="3" class="empty-state"><p>All staff mapped!</p></td></tr></tbody>
+              <thead><tr><th>Tên Pancake</th><th>Email</th><th>Đơn hàng bị ảnh hưởng</th></tr></thead>
+              <tbody id="unmapped-tbody"><tr><td colspan="3" class="empty-state"><p>Tất cả nhân viên đã được ánh xạ!</p></td></tr></tbody>
             </table>
           </div>
         </div>
       </div>
       <div class="panel">
-        <div class="panel-header"><h3>Getfly Users</h3></div>
+        <div class="panel-header"><h3>Danh sách người dùng Getfly</h3></div>
         <div class="panel-body">
           <div class="table-wrapper">
             <table>
-              <thead><tr><th>User ID</th><th>Name</th><th>Email</th><th>Department</th></tr></thead>
-              <tbody id="getfly-users-tbody"><tr><td colspan="4" class="empty-state"><p>Loading...</p></td></tr></tbody>
+              <thead><tr><th>Mã NV (User ID)</th><th>Tên</th><th>Email</th><th>Phòng ban</th></tr></thead>
+              <tbody id="getfly-users-tbody"><tr><td colspan="4" class="empty-state"><p>Đang tải...</p></td></tr></tbody>
             </table>
           </div>
         </div>
@@ -267,7 +267,7 @@
 
   <!-- SETTINGS -->
   <section class="page" id="page-settings">
-    <div class="topbar"><h2>Settings</h2></div>
+    <div class="topbar"><h2>Cài đặt</h2></div>
     <div class="content">
       <div class="settings-grid">
 
@@ -275,7 +275,7 @@
         <div class="panel">
           <div class="panel-header">
             <h3>&#x1F95E; Pancake POS</h3>
-            <button class="btn btn-secondary btn-sm" onclick="testConnection('pancake-pos')">Test</button>
+            <button class="btn btn-secondary btn-sm" onclick="testConnection('pancake-pos')">Kiểm tra kết nối</button>
           </div>
           <div class="panel-body padded">
             <div class="input-group">
@@ -292,7 +292,7 @@
             </div>
             <div class="test-result" id="test-pancake-pos"></div>
             <div class="save-result" id="save-result-pos"></div>
-            <button class="btn btn-primary btn-save" onclick="saveSection('pos')">&#x1F4BE; Save Pancake POS</button>
+            <button class="btn btn-primary btn-save" onclick="saveSection('pos')">&#x1F4BE; Lưu Pancake POS</button>
           </div>
         </div>
 
@@ -300,7 +300,7 @@
         <div class="panel">
           <div class="panel-header">
             <h3>&#x1F4AC; Pancake Chat</h3>
-            <button class="btn btn-secondary btn-sm" onclick="testConnection('pancake-chat')">Test</button>
+            <button class="btn btn-secondary btn-sm" onclick="testConnection('pancake-chat')">Kiểm tra kết nối</button>
           </div>
           <div class="panel-body padded">
             <div class="input-group">
@@ -317,7 +317,7 @@
             </div>
             <div class="test-result" id="test-pancake-chat"></div>
             <div class="save-result" id="save-result-chat"></div>
-            <button class="btn btn-primary btn-save" onclick="saveSection('chat')">&#x1F4BE; Save Pancake Chat</button>
+            <button class="btn btn-primary btn-save" onclick="saveSection('chat')">&#x1F4BE; Lưu Pancake Chat</button>
           </div>
         </div>
 
@@ -325,7 +325,7 @@
         <div class="panel">
           <div class="panel-header">
             <h3>&#x1F4BC; Getfly CRM</h3>
-            <button class="btn btn-secondary btn-sm" onclick="testConnection('getfly')">Test</button>
+            <button class="btn btn-secondary btn-sm" onclick="testConnection('getfly')">Kiểm tra kết nối</button>
           </div>
           <div class="panel-body padded">
             <div class="input-group">
@@ -338,28 +338,28 @@
             </div>
             <div class="test-result" id="test-getfly"></div>
             <div class="save-result" id="save-result-getfly"></div>
-            <button class="btn btn-primary btn-save" onclick="saveSection('getfly')">&#x1F4BE; Save Getfly CRM</button>
+            <button class="btn btn-primary btn-save" onclick="saveSection('getfly')">&#x1F4BE; Lưu Getfly CRM</button>
           </div>
         </div>
 
         <!-- Sync Settings -->
         <div class="panel">
-          <div class="panel-header"><h3>&#x23F0; Sync Settings</h3></div>
+          <div class="panel-header"><h3>&#x23F0; Cài đặt đồng bộ</h3></div>
           <div class="panel-body padded">
             <div class="input-group">
-              <label>Order Sync Interval (seconds)</label>
+              <label>Khoảng thời gian đồng bộ đơn (giây)</label>
               <input type="number" id="cfg-sync-interval" min="60" step="30" value="300">
             </div>
             <div class="input-group">
-              <label>Days to Scan (0 = all)</label>
+              <label>Số ngày quét (0 = tất cả)</label>
               <input type="number" id="cfg-sync-days" min="0" max="365" value="2">
             </div>
             <div class="input-group">
-              <label>Chat Poll Interval (seconds)</label>
+              <label>Khoảng thời gian kiểm tra Chat (giây)</label>
               <input type="number" id="cfg-chat-poll" min="10" step="5" value="30">
             </div>
             <div class="save-result" id="save-result-sync"></div>
-            <button class="btn btn-primary btn-save" onclick="saveSection('sync')">&#x1F4BE; Save Sync Settings</button>
+            <button class="btn btn-primary btn-save" onclick="saveSection('sync')">&#x1F4BE; Lưu cài đặt đồng bộ</button>
           </div>
         </div>
 
@@ -368,35 +368,35 @@
           <div class="panel-header"><h3>&#x1F517; Webhook</h3></div>
           <div class="panel-body padded">
             <div class="input-group">
-              <label>Webhook Secret</label>
+              <label>Khóa bảo mật Webhook (Secret)</label>
               <input type="text" id="cfg-webhook-secret" placeholder="Webhook secret key">
             </div>
             <div class="input-group">
-              <label>Webhook URL (copy to Pancake POS)</label>
+              <label>URL Webhook (copy vào Pancake POS)</label>
               <div class="copy-field">
                 <input type="text" id="cfg-webhook-url" readonly>
-                <button class="btn btn-secondary btn-sm" onclick="copyWebhookUrl()">Copy</button>
+                <button class="btn btn-secondary btn-sm" onclick="copyWebhookUrl()">Sao chép</button>
               </div>
             </div>
             <div class="save-result" id="save-result-webhook"></div>
-            <button class="btn btn-primary btn-save" onclick="saveSection('webhook')">&#x1F4BE; Save Webhook</button>
+            <button class="btn btn-primary btn-save" onclick="saveSection('webhook')">&#x1F4BE; Lưu Webhook</button>
           </div>
         </div>
 
         <!-- Change Password -->
         <div class="panel">
-          <div class="panel-header"><h3>&#x1F512; Change Password</h3></div>
+          <div class="panel-header"><h3>&#x1F512; Đổi mật khẩu</h3></div>
           <div class="panel-body padded">
             <div class="input-group">
-              <label>Current Password</label>
-              <input type="password" id="cfg-current-pass" placeholder="Current password">
+              <label>Mật khẩu hiện tại</label>
+              <input type="password" id="cfg-current-pass" placeholder="Mật khẩu hiện tại">
             </div>
             <div class="input-group">
-              <label>New Password</label>
-              <input type="password" id="cfg-new-pass" placeholder="New password (min 6 chars)">
+              <label>Mật khẩu mới</label>
+              <input type="password" id="cfg-new-pass" placeholder="Mật khẩu mới (ít nhất 6 ký tự)">
             </div>
             <div class="save-result" id="save-result-password"></div>
-            <button class="btn btn-primary btn-save" onclick="changePassword()">&#x1F512; Change Password</button>
+            <button class="btn btn-primary btn-save" onclick="changePassword()">&#x1F512; Đổi mật khẩu</button>
           </div>
         </div>
 
@@ -407,26 +407,26 @@
   <!-- LOGS -->
   <section class="page" id="page-logs">
     <div class="topbar">
-      <h2>Logs</h2>
+      <h2>Nhật ký hệ thống</h2>
       <div class="topbar-actions">
-        <input type="text" id="log-filter" placeholder="Filter logs..." style="width:200px;padding:6px 10px;font-size:13px;border:1px solid var(--border);border-radius:6px" oninput="refreshLogs()">
+        <input type="text" id="log-filter" placeholder="Lọc nhật ký..." style="width:200px;padding:6px 10px;font-size:13px;border:1px solid var(--border);border-radius:6px" oninput="refreshLogs()">
         <select id="log-level-filter" onchange="refreshLogs()" style="width:auto;min-width:100px;padding:6px 10px;font-size:13px">
-          <option value="">All Levels</option>
-          <option value="ERROR">ERROR</option>
-          <option value="WARN">WARN</option>
-          <option value="INFO">INFO</option>
+          <option value="">Tất cả các mức</option>
+          <option value="ERROR">LỖI (ERROR)</option>
+          <option value="WARN">CẢNH BÁO (WARN)</option>
+          <option value="INFO">THÔNG TIN (INFO)</option>
         </select>
         <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-secondary)">
-          <input type="checkbox" id="log-auto-refresh" checked> Auto
+          <input type="checkbox" id="log-auto-refresh" checked> Tự động
         </label>
-        <button class="btn btn-secondary btn-sm" onclick="refreshLogs()">&#x1F504; Refresh</button>
+        <button class="btn btn-secondary btn-sm" onclick="refreshLogs()">&#x1F504; Làm mới</button>
       </div>
     </div>
     <div class="content">
       <div class="panel">
         <div class="panel-body">
           <div class="log-container" id="log-container">
-            <div class="empty-state" style="color:#64748B"><p>Loading logs...</p></div>
+            <div class="empty-state" style="color:#64748B"><p>Đang tải nhật ký...</p></div>
           </div>
         </div>
       </div>

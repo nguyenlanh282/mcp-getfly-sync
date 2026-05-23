@@ -4,13 +4,13 @@ const path = require('path');
 const LOG_LEVELS = { ERROR: 0, WARN: 1, INFO: 2, DEBUG: 3 };
 const currentLevel = LOG_LEVELS[process.env.LOG_LEVEL] ?? LOG_LEVELS.INFO;
 
-// File-based persistence
+// Lưu trữ dựa trên tệp
 const DATA_DIR = path.join(__dirname, '../../data');
 const LOG_FILE = path.join(DATA_DIR, 'logs.json');
 const MAX_LOG_BUFFER = 1000;
-const SAVE_INTERVAL = 10000; // Save every 10 seconds
+const SAVE_INTERVAL = 10000; // Lưu mỗi 10 giây
 
-// In-memory log buffer
+// Bộ đệm nhật ký trong bộ nhớ
 let logBuffer = [];
 let dirty = false;
 
@@ -18,7 +18,7 @@ function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// Load logs from file on startup
+// Tải nhật ký từ tệp khi khởi động
 function loadLogs() {
   try {
     ensureDir();
@@ -31,7 +31,7 @@ function loadLogs() {
   }
 }
 
-// Save logs to file
+// Lưu nhật ký vào tệp
 function saveLogs() {
   if (!dirty) return;
   try {
@@ -57,12 +57,12 @@ function log(level, tag, message, data) {
     message: data !== undefined ? `${message} ${JSON.stringify(data)}` : message,
   };
 
-  // Push to buffer
+  // Đẩy vào bộ đệm
   logBuffer.unshift(entry);
   if (logBuffer.length > MAX_LOG_BUFFER) logBuffer.length = MAX_LOG_BUFFER;
   dirty = true;
 
-  // Console output
+  // Xuất ra bảng điều khiển (Console)
   if (data !== undefined) {
     console.log(prefix, message, JSON.stringify(data, null, 2));
   } else {
@@ -81,11 +81,11 @@ function getRecentLogs(limit = 100, filter = null) {
   return logs.slice(0, limit);
 }
 
-// Init: load from file + periodic save
+// Khởi tạo: tải từ tệp + lưu định kỳ
 loadLogs();
 const saveTimer = setInterval(saveLogs, SAVE_INTERVAL);
 
-// Save on process exit
+// Lưu khi tiến trình kết thúc
 process.on('exit', saveLogs);
 process.on('SIGTERM', () => { saveLogs(); process.exit(0); });
 process.on('SIGINT', () => { saveLogs(); process.exit(0); });
@@ -96,5 +96,5 @@ module.exports = {
   error: (tag, msg, data) => log('ERROR', tag, msg, data),
   debug: (tag, msg, data) => log('DEBUG', tag, msg, data),
   getRecentLogs,
-  saveLogs, // Export for manual save
+  saveLogs, // Xuất (export) để lưu thủ công
 };

@@ -1,10 +1,10 @@
-// ── State ──
+// ── Trạng thái (State) ──
 let currentPage = 'dashboard';
 let ordersPage = 1;
 let searchTimer = null;
 let logAutoTimer = null;
 
-// ── Navigation ──
+// ── Điều hướng (Navigation) ──
 document.querySelectorAll('.nav-item').forEach((item) => {
   item.addEventListener('click', () => navigateTo(item.dataset.page));
 });
@@ -24,7 +24,7 @@ function navigateTo(page) {
   if (page !== 'logs') stopLogAutoRefresh();
 }
 
-// ── API Helper ──
+// ── Trợ giúp API (API Helper) ──
 async function api(path, options = {}) {
   const res = await fetch(`/api${path}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -37,13 +37,13 @@ async function api(path, options = {}) {
   return res.json();
 }
 
-// ── Logout ──
+// ── Đăng xuất (Logout) ──
 async function logout() {
   await fetch('/auth/logout', { method: 'POST' });
   window.location.href = '/auth/login';
 }
 
-// ── Toast ──
+// ── Thông báo (Toast) ──
 function toast(message, type = 'info') {
   const container = document.getElementById('toast-container');
   const el = document.createElement('div');
@@ -53,7 +53,7 @@ function toast(message, type = 'info') {
   setTimeout(() => el.remove(), 4000);
 }
 
-// ── Save Result feedback ──
+// ── Phản hồi kết quả lưu (Save Result feedback) ──
 function showSaveResult(sectionId, success, message) {
   const el = document.getElementById(`save-result-${sectionId}`);
   if (!el) return;
@@ -63,7 +63,7 @@ function showSaveResult(sectionId, success, message) {
   setTimeout(() => { el.style.display = 'none'; }, 5000);
 }
 
-// ── Format helpers ──
+// ── Trợ giúp định dạng (Format helpers) ──
 function formatTime(isoString) {
   if (!isoString) return 'N/A';
   return new Date(isoString).toLocaleString('vi-VN', { hour12: false });
@@ -83,13 +83,13 @@ function formatBytes(bytes) {
 
 function statusBadge(status) {
   const map = {
-    synced: ['badge-synced', 'Synced'],
-    updated: ['badge-updated', 'Updated'],
-    error: ['badge-error', 'Error'],
-    'unmapped-staff': ['badge-unmapped', 'Unmapped'],
-    'not-on-getfly': ['badge-pending', 'Not on Getfly'],
-    'no-chat-assignee': ['badge-pending', 'No Assignee'],
-    unknown: ['badge-pending', 'Unknown'],
+    synced: ['badge-synced', 'Đã đồng bộ'],
+    updated: ['badge-updated', 'Đã cập nhật'],
+    error: ['badge-error', 'Lỗi'],
+    'unmapped-staff': ['badge-unmapped', 'Chưa ánh xạ'],
+    'not-on-getfly': ['badge-pending', 'Không có trên Getfly'],
+    'no-chat-assignee': ['badge-pending', 'Không có NV'],
+    unknown: ['badge-pending', 'Không rõ'],
   };
   const [cls, label] = map[status] || map.unknown;
   return `<span class="badge ${cls}">${label}</span>`;
@@ -102,7 +102,7 @@ function escapeHtml(str) {
 }
 
 // ════════════════════════════════
-// DASHBOARD
+// BẢNG TỔNG QUAN (DASHBOARD)
 // ════════════════════════════════
 async function loadDashboard() {
   try {
@@ -132,12 +132,12 @@ async function loadDashboard() {
       document.getElementById('last-sync-time').textContent = formatTime(ls.time);
       document.getElementById('last-sync-info').innerHTML = `
         <div style="display:flex;gap:24px;flex-wrap:wrap">
-          <div><strong>${ls.totalPOS}</strong> <span style="color:var(--text-secondary)">POS orders</span></div>
-          <div><strong>${ls.synced}</strong> <span style="color:var(--text-secondary)">checked</span></div>
-          <div><strong style="color:var(--info)">${ls.updated}</strong> <span style="color:var(--text-secondary)">updated</span></div>
-          <div><strong>${ls.skipped}</strong> <span style="color:var(--text-secondary)">skipped</span></div>
-          <div><strong style="color:var(--error)">${ls.errors}</strong> <span style="color:var(--text-secondary)">errors</span></div>
-          <div><strong>${ls.elapsed}</strong> <span style="color:var(--text-secondary)">duration</span></div>
+          <div><strong>${ls.totalPOS}</strong> <span style="color:var(--text-secondary)">đơn POS</span></div>
+          <div><strong>${ls.synced}</strong> <span style="color:var(--text-secondary)">đã kiểm tra</span></div>
+          <div><strong style="color:var(--info)">${ls.updated}</strong> <span style="color:var(--text-secondary)">đã cập nhật</span></div>
+          <div><strong>${ls.skipped}</strong> <span style="color:var(--text-secondary)">bỏ qua</span></div>
+          <div><strong style="color:var(--error)">${ls.errors}</strong> <span style="color:var(--text-secondary)">lỗi</span></div>
+          <div><strong>${ls.elapsed}</strong> <span style="color:var(--text-secondary)">thời gian</span></div>
         </div>`;
     }
 
@@ -161,7 +161,7 @@ async function loadDashboard() {
   }
 }
 
-// ── Process Control ──
+// ── Quản lý tiến trình (Process Control) ──
 function updateProcessControls(processes) {
   // Scheduler
   const schedulerToggle = document.getElementById('toggle-scheduler');
@@ -169,11 +169,11 @@ function updateProcessControls(processes) {
   const schedulerDesc = document.getElementById('scheduler-desc');
   schedulerToggle.checked = processes.scheduler.active;
   if (processes.scheduler.active) {
-    schedulerStatus.innerHTML = '<span class="status-dot on"></span> Running';
-    schedulerDesc.textContent = `Auto sync every ${Math.round(processes.scheduler.intervalMs / 1000)}s, ${processes.scheduler.daysBack === 0 ? 'all data' : processes.scheduler.daysBack + ' days'}`;
+    schedulerStatus.innerHTML = '<span class="status-dot on"></span> Đang chạy';
+    schedulerDesc.textContent = `Tự động đồng bộ mỗi ${Math.round(processes.scheduler.intervalMs / 1000)}s, ${processes.scheduler.daysBack === 0 ? 'tất cả dữ liệu' : processes.scheduler.daysBack + ' ngày'}`;
   } else {
-    schedulerStatus.innerHTML = '<span class="status-dot off"></span> Stopped';
-    schedulerDesc.textContent = 'Auto sync disabled';
+    schedulerStatus.innerHTML = '<span class="status-dot off"></span> Đã dừng';
+    schedulerDesc.textContent = 'Tự động đồng bộ đã tắt';
   }
 
   // Poller
@@ -182,11 +182,11 @@ function updateProcessControls(processes) {
   const pollerDesc = document.getElementById('poller-desc');
   pollerToggle.checked = processes.poller.active;
   if (processes.poller.active) {
-    pollerStatus.innerHTML = '<span class="status-dot on"></span> Running';
-    pollerDesc.textContent = `Checking every ${Math.round(processes.poller.intervalMs / 1000)}s`;
+    pollerStatus.innerHTML = '<span class="status-dot on"></span> Đang chạy';
+    pollerDesc.textContent = `Kiểm tra mỗi ${Math.round(processes.poller.intervalMs / 1000)}s`;
   } else {
-    pollerStatus.innerHTML = '<span class="status-dot off"></span> Stopped';
-    pollerDesc.textContent = 'Chat poller disabled';
+    pollerStatus.innerHTML = '<span class="status-dot off"></span> Đã dừng';
+    pollerDesc.textContent = 'Trình kiểm tra Chat đã tắt';
   }
 
   // Server info
@@ -201,11 +201,11 @@ async function toggleScheduler(enabled) {
   try {
     const result = await api(enabled ? '/scheduler/start' : '/scheduler/stop', { method: 'POST' });
     if (result) {
-      toast(enabled ? 'Scheduler started' : 'Scheduler stopped', 'success');
+      toast(enabled ? 'Trình lên lịch đã bắt đầu' : 'Trình lên lịch đã dừng', 'success');
       loadDashboard();
     }
   } catch (err) {
-    toast('Failed: ' + err.message, 'error');
+    toast('Thất bại: ' + err.message, 'error');
   }
 }
 
@@ -213,15 +213,15 @@ async function togglePoller(enabled) {
   try {
     const result = await api(enabled ? '/poller/start' : '/poller/stop', { method: 'POST' });
     if (result) {
-      toast(enabled ? 'Chat poller started' : 'Chat poller stopped', 'success');
+      toast(enabled ? 'Trình kiểm tra Chat đã bắt đầu' : 'Trình kiểm tra Chat đã dừng', 'success');
       loadDashboard();
     }
   } catch (err) {
-    toast('Failed: ' + err.message, 'error');
+    toast('Thất bại: ' + err.message, 'error');
   }
 }
 
-// ── Sync Progress ──
+// ── Tiến trình đồng bộ (Sync Progress) ──
 function updateProgressUI(progress) {
   const panel = document.getElementById('sync-progress-panel');
   if (!progress || !progress.active) {
@@ -286,35 +286,35 @@ function updateProgressDetails(progress) {
       if (d.posTotal !== undefined) return `${d.posRelevant || 0} / ${d.posTotal}`;
       if (d.posLive !== undefined) return `${d.posLive.toLocaleString()}…`;
       return null;
-    }, '⏳ Fetching...');
+    }, '⏳ Đang tải...');
   setStepVal('step-chat', 'fetching-chat',
     () => {
       if (d.chatTotal !== undefined) return d.chatTotal.toLocaleString();
       if (d.chatLive !== undefined) return `${d.chatLive.toLocaleString()}…`;
       return null;
-    }, '⏳ Fetching...');
+    }, '⏳ Đang tải...');
   setStepVal('step-getfly', 'fetching-getfly',
     () => {
       if (d.getflyTotal !== undefined) return d.getflyTotal.toLocaleString();
       if (d.getflyLive !== undefined) return `${d.getflyLive.toLocaleString()}…`;
       return null;
-    }, '⏳ Fetching...');
+    }, '⏳ Đang tải...');
   setStepVal('step-compare', 'comparing',
-    () => d.processed !== undefined ? `${d.processed}/${d.compareTotal || '?'} (${d.updated || 0} ✓)` : null, '⏳ Comparing...');
+    () => d.processed !== undefined ? `${d.processed}/${d.compareTotal || '?'} (${d.updated || 0} ✓)` : null, '⏳ Đang so sánh...');
 }
 
-// ── Sync Status (sidebar) ──
+// ── Trạng thái đồng bộ (sidebar) ──
 function updateSyncStatus(sync) {
   const dot = document.getElementById('sync-dot');
   const text = document.getElementById('sync-status-text');
   const btn = document.getElementById('btn-sync-now');
   if (sync.isRunning) {
     dot.className = 'sync-dot running';
-    text.textContent = 'Syncing...';
+    text.textContent = 'Đang đồng bộ...';
     if (btn) btn.disabled = true;
   } else {
     dot.className = 'sync-dot';
-    text.textContent = sync.lastSync ? `Last: ${formatTime(sync.lastSync.time)}` : 'Idle';
+    text.textContent = sync.lastSync ? `Lần cuối: ${formatTime(sync.lastSync.time)}` : 'Đang rảnh';
     if (btn) btn.disabled = false;
   }
 }
@@ -322,17 +322,17 @@ function updateSyncStatus(sync) {
 function renderSyncHistory(history) {
   const body = document.getElementById('sync-history-body');
   if (!history || history.length === 0) {
-    body.innerHTML = '<div class="empty-state"><p>No sync history</p></div>';
+    body.innerHTML = '<div class="empty-state"><p>Không có lịch sử đồng bộ</p></div>';
     return;
   }
   body.innerHTML = history.map((h) => `
     <div class="history-item">
       <span class="history-time">${formatTime(h.time)}</span>
       <div class="history-stats">
-        <span class="history-stat"><span class="dot" style="background:var(--text-secondary)"></span> ${h.synced} checked</span>
-        <span class="history-stat"><span class="dot" style="background:var(--info)"></span> ${h.updated} updated</span>
-        <span class="history-stat"><span class="dot" style="background:var(--warning)"></span> ${h.skipped} skipped</span>
-        <span class="history-stat"><span class="dot" style="background:var(--error)"></span> ${h.errors} errors</span>
+        <span class="history-stat"><span class="dot" style="background:var(--text-secondary)"></span> ${h.synced} đã kiểm tra</span>
+        <span class="history-stat"><span class="dot" style="background:var(--info)"></span> ${h.updated} đã cập nhật</span>
+        <span class="history-stat"><span class="dot" style="background:var(--warning)"></span> ${h.skipped} bỏ qua</span>
+        <span class="history-stat"><span class="dot" style="background:var(--error)"></span> ${h.errors} lỗi</span>
         <span style="color:var(--text-secondary)">${h.elapsed}</span>
       </div>
     </div>`).join('');
@@ -344,8 +344,8 @@ async function triggerSync() {
   const days = selectEl ? parseInt(selectEl.value) : 7;
 
   btn.disabled = true;
-  btn.innerHTML = '&#x23F3; Syncing...';
-  toast(`Đang bắt đầu sync (${days === 0 ? 'tất cả' : days + ' ngày'})...`, 'info');
+  btn.innerHTML = '&#x23F3; Đang đồng bộ...';
+  toast(`Đang bắt đầu đồng bộ (${days === 0 ? 'tất cả' : days + ' ngày'})...`, 'info');
 
   try {
     const result = await fetch('/api/sync/trigger', {
@@ -364,7 +364,7 @@ async function triggerSync() {
     if (!result.ok) {
       toast('Lỗi: ' + (data.error || result.statusText), 'error');
       btn.disabled = false;
-      btn.innerHTML = '&#x1F504; Sync Now';
+      btn.innerHTML = '&#x1F504; Đồng bộ ngay';
       return;
     }
 
@@ -372,14 +372,14 @@ async function triggerSync() {
     // SSE sẽ tự cập nhật progress và re-enable button khi xong
   } catch (err) {
     console.error('[Sync] Trigger failed:', err);
-    toast('Sync thất bại: ' + err.message, 'error');
+    toast('Đồng bộ thất bại: ' + err.message, 'error');
     btn.disabled = false;
-    btn.innerHTML = '&#x1F504; Sync Now';
+    btn.innerHTML = '&#x1F504; Đồng bộ ngay';
   }
 }
 
 // ════════════════════════════════
-// ORDERS
+// ĐƠN HÀNG (ORDERS)
 // ════════════════════════════════
 function debounceSearch() {
   clearTimeout(searchTimer);
@@ -399,7 +399,7 @@ function renderOrders(data) {
   const tbody = document.getElementById('orders-tbody');
   const { orders, total, page, pageSize } = data;
   if (!orders || orders.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>No orders found</p></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Không tìm thấy đơn hàng</p></td></tr>';
     document.getElementById('orders-pagination').style.display = 'none';
     return;
   }
@@ -414,7 +414,7 @@ function renderOrders(data) {
     </tr>`).join('');
   const totalPages = Math.ceil(total / pageSize);
   document.getElementById('orders-pagination').style.display = 'flex';
-  document.getElementById('orders-page-info').textContent = `Page ${page} of ${totalPages} (${total} orders)`;
+  document.getElementById('orders-page-info').textContent = `Trang ${page} / ${totalPages} (${total} đơn hàng)`;
   document.getElementById('btn-prev').disabled = page <= 1;
   document.getElementById('btn-next').disabled = page >= totalPages;
 }
@@ -426,7 +426,7 @@ function changePage(delta) {
 }
 
 // ════════════════════════════════
-// STAFF
+// ÁNH XẠ NHÂN VIÊN (STAFF)
 // ════════════════════════════════
 async function refreshStaff() {
   try {
@@ -440,21 +440,21 @@ async function refreshStaff() {
 function renderUnmapped(unmapped) {
   const tbody = document.getElementById('unmapped-tbody');
   if (!unmapped || unmapped.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--success)">&#x2705; All staff mapped!</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--success)">&#x2705; Tất cả nhân viên đã được ánh xạ!</td></tr>';
     return;
   }
   tbody.innerHTML = unmapped.map((u) => `
     <tr>
       <td><strong>${escapeHtml(u.name)}</strong></td>
-      <td>${u.email ? escapeHtml(u.email) : '<span style="color:var(--text-secondary)">No email</span>'}</td>
-      <td><span class="badge badge-unmapped">${u.orderCount} orders</span></td>
+      <td>${u.email ? escapeHtml(u.email) : '<span style="color:var(--text-secondary)">Không có email</span>'}</td>
+      <td><span class="badge badge-unmapped">${u.orderCount} đơn hàng</span></td>
     </tr>`).join('');
 }
 
 function renderGetflyUsers(users) {
   const tbody = document.getElementById('getfly-users-tbody');
   if (!users || users.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><p>No users found</p></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><p>Không tìm thấy người dùng</p></td></tr>';
     return;
   }
   tbody.innerHTML = users.map((u) => `
@@ -467,7 +467,7 @@ function renderGetflyUsers(users) {
 }
 
 // ════════════════════════════════
-// SETTINGS
+// CÀI ĐẶT (SETTINGS)
 // ════════════════════════════════
 async function loadConfig() {
   try {
@@ -529,21 +529,21 @@ async function saveSection(section) {
   }
 
   const el = document.getElementById(`save-result-${sectionId}`);
-  if (el) { el.className = 'save-result loading'; el.textContent = 'Saving...'; el.style.display = 'block'; }
+  if (el) { el.className = 'save-result loading'; el.textContent = 'Đang lưu...'; el.style.display = 'block'; }
 
   try {
     const result = await api('/config', { method: 'PUT', body: JSON.stringify(body) });
     if (result && !result.error) {
-      showSaveResult(sectionId, true, `Saved! (${result.keys?.length || 0} keys updated)`);
-      toast('Saved!', 'success');
+      showSaveResult(sectionId, true, `Đã lưu! (${result.keys?.length || 0} khoá được cập nhật)`);
+      toast('Đã lưu!', 'success');
       loadConfig();
     } else {
-      showSaveResult(sectionId, false, result?.error || 'Save failed');
-      toast(result?.error || 'Save failed', 'error');
+      showSaveResult(sectionId, false, result?.error || 'Lưu thất bại');
+      toast(result?.error || 'Lưu thất bại', 'error');
     }
   } catch (err) {
-    showSaveResult(sectionId, false, 'Error: ' + err.message);
-    toast('Save failed: ' + err.message, 'error');
+    showSaveResult(sectionId, false, 'Lỗi: ' + err.message);
+    toast('Lưu thất bại: ' + err.message, 'error');
   }
 }
 
@@ -551,30 +551,30 @@ async function testConnection(service) {
   const el = document.getElementById(`test-${service}`);
   el.className = 'test-result loading';
   el.style.display = 'block';
-  el.textContent = 'Testing connection...';
+  el.textContent = 'Đang kiểm tra kết nối...';
   try {
     const result = await api(`/config/test-${service}`, { method: 'POST' });
     if (!result) return;
     el.className = `test-result ${result.success ? 'success' : 'error'}`;
-    el.textContent = result.success ? `OK: ${result.message}` : `Failed: ${result.message}`;
+    el.textContent = result.success ? `OK: ${result.message}` : `Thất bại: ${result.message}`;
   } catch (err) {
     el.className = 'test-result error';
-    el.textContent = 'Connection failed: ' + err.message;
+    el.textContent = 'Kết nối thất bại: ' + err.message;
   }
 }
 
 function copyWebhookUrl() {
   const input = document.getElementById('cfg-webhook-url');
-  navigator.clipboard.writeText(input.value).then(() => toast('Webhook URL copied!', 'success'));
+  navigator.clipboard.writeText(input.value).then(() => toast('Đã sao chép URL Webhook!', 'success'));
 }
 
 async function changePassword() {
   const current = document.getElementById('cfg-current-pass').value;
   const newPass = document.getElementById('cfg-new-pass').value;
-  if (!current || !newPass) { showSaveResult('password', false, 'Please fill in both fields'); return; }
+  if (!current || !newPass) { showSaveResult('password', false, 'Vui lòng điền đủ 2 trường'); return; }
 
   const el = document.getElementById('save-result-password');
-  if (el) { el.className = 'save-result loading'; el.textContent = 'Changing...'; el.style.display = 'block'; }
+  if (el) { el.className = 'save-result loading'; el.textContent = 'Đang đổi...'; el.style.display = 'block'; }
 
   try {
     const res = await fetch('/api/config/change-password', {
@@ -584,12 +584,12 @@ async function changePassword() {
     });
     const data = await res.json();
     if (res.ok) {
-      showSaveResult('password', true, 'Password changed!');
-      toast('Password changed!', 'success');
+      showSaveResult('password', true, 'Đã đổi mật khẩu!');
+      toast('Đã đổi mật khẩu!', 'success');
       document.getElementById('cfg-current-pass').value = '';
       document.getElementById('cfg-new-pass').value = '';
     } else {
-      showSaveResult('password', false, data.error || 'Failed');
+      showSaveResult('password', false, data.error || 'Thất bại');
     }
   } catch (err) {
     showSaveResult('password', false, 'Error: ' + err.message);
@@ -597,7 +597,7 @@ async function changePassword() {
 }
 
 // ════════════════════════════════
-// LOGS
+// NHẬT KÝ HỆ THỐNG (LOGS)
 // ════════════════════════════════
 async function refreshLogs() {
   try {
@@ -612,7 +612,7 @@ async function refreshLogs() {
 function renderLogs(logs) {
   const container = document.getElementById('log-container');
   if (!logs || logs.length === 0) {
-    container.innerHTML = '<div style="color:#64748B;padding:20px;text-align:center">No logs</div>';
+    container.innerHTML = '<div style="color:#64748B;padding:20px;text-align:center">Không có nhật ký</div>';
     return;
   }
   container.innerHTML = logs.map((l) =>
@@ -632,7 +632,7 @@ function stopLogAutoRefresh() {
 }
 
 // ════════════════════════════════
-// SSE Real-time
+// THỜI GIAN THỰC SSE (SSE Real-time)
 // ════════════════════════════════
 let wasRunning = false;
 
@@ -686,8 +686,8 @@ function connectSSE() {
       // Sync completed detection - refresh dashboard data
       if (wasRunning && !data.sync.isRunning) {
         const btn = document.getElementById('btn-sync-now');
-        if (btn) { btn.disabled = false; btn.innerHTML = '&#x1F504; Sync Now'; }
-        toast('Sync complete!', 'success');
+        if (btn) { btn.disabled = false; btn.innerHTML = '&#x1F504; Đồng bộ ngay'; }
+        toast('Đồng bộ hoàn tất!', 'success');
         if (currentPage === 'dashboard') {
           setTimeout(loadDashboard, 1000);
         }
@@ -697,13 +697,13 @@ function connectSSE() {
       // Sync started detection
       if (data.sync.isRunning) {
         const btn = document.getElementById('btn-sync-now');
-        if (btn) { btn.disabled = true; btn.innerHTML = '&#x23F3; Syncing...'; }
+        if (btn) { btn.disabled = true; btn.innerHTML = '&#x23F3; Đang đồng bộ...'; }
       }
     } catch (e) { /* ignore parse errors */ }
   };
   es.onerror = () => { es.close(); setTimeout(connectSSE, 5000); };
 }
 
-// ── Init ──
+// ── Khởi tạo (Init) ──
 loadDashboard();
 connectSSE();

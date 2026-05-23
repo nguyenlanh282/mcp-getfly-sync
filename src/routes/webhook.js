@@ -54,7 +54,7 @@ async function withRateLimit(fn, maxRetries = 3) {
   }
 }
 
-// Webhook authentication middleware
+// Middleware xác thực webhook
 function verifyWebhook(req, res, next) {
   const secret = config.webhookSecret;
   if (!secret) return next();

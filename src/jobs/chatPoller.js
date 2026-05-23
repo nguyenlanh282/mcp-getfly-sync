@@ -15,7 +15,7 @@ async function checkAssignmentChanges() {
 
   log.info(TAG, `Checking ${tracked.length} tracked conversations for assignment changes...`);
 
-  // Batch fetch conversations
+  // Lấy hàng loạt các cuộc hội thoại
   const convIds = tracked.map((t) => t.conversationId);
   const conversations = await pancakeChat.getMultipleConversations(convIds);
 
@@ -24,23 +24,23 @@ async function checkAssignmentChanges() {
       const conv = conversations.get(order.conversationId);
       if (!conv || !conv.assigneeId) continue;
 
-      // Check if assignee changed
+      // Kiểm tra xem người được phân công có thay đổi không
       if (conv.assigneeId === order.assigneeId) continue;
 
       log.info(TAG, `Assignment changed for order ${order.orderCode}: ${order.assigneeName} -> ${conv.assigneeName}`);
 
-      // Map new assignee to Getfly
+      // Ánh xạ người được phân công mới sang Getfly
       const getflyUser = await staffMapper.findGetflyUser(conv.assigneeName, conv.assigneeEmail);
       if (!getflyUser) {
         log.warn(TAG, `No Getfly match for new assignee: ${conv.assigneeName}`);
         continue;
       }
 
-      // Update on Getfly - order assignment
+      // Cập nhật trên Getfly - phân công đơn hàng
       await getfly.assignOrderToUser(order.orderCode, getflyUser.user_id);
       log.info(TAG, `Order ${order.orderCode} reassigned to ${getflyUser.contact_name} (user_id: ${getflyUser.user_id})`);
 
-      // Update account manager on customer account
+      // Cập nhật người quản lý trên tài khoản khách hàng
       try {
         const gfOrder = await getfly.findOrderByCode(order.orderCode);
         if (gfOrder) {
@@ -58,7 +58,7 @@ async function checkAssignmentChanges() {
         log.warn(TAG, `Account manager update failed for ${order.orderCode}: ${accErr.message}`);
       }
 
-      // Update store
+      // Cập nhật kho dữ liệu (store)
       orderStore.updateAssignee(order.orderCode, conv.assigneeId, conv.assigneeName, getflyUser.user_id);
     } catch (err) {
       log.error(TAG, `Error checking ${order.orderCode}:`, { error: err.message });

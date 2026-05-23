@@ -6,7 +6,7 @@ const log = require('../utils/logger');
 const router = express.Router();
 const TAG = 'Auth';
 
-// Login page
+// Trang đăng nhập
 router.get('/login', (req, res) => {
   if (req.session && req.session.authenticated) {
     return res.redirect('/');
@@ -14,25 +14,25 @@ router.get('/login', (req, res) => {
   res.send(loginHTML());
 });
 
-// Login API
+// API đăng nhập
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   const usernameMatch = username === config.admin.user;
-  // Support both plain-text (legacy) and bcrypt hashed passwords
+  // Hỗ trợ cả mật khẩu văn bản thuần (cũ) và mật khẩu đã băm bcrypt
   const isHashed = config.admin.pass.startsWith('$2');
   const passwordMatch = isHashed
     ? bcrypt.compareSync(password, config.admin.pass)
     : password === config.admin.pass;
 
   if (usernameMatch && passwordMatch) {
-    // Auto-upgrade plain-text password to bcrypt on first successful login
+    // Tự động nâng cấp mật khẩu văn bản thuần lên bcrypt ở lần đăng nhập thành công đầu tiên
     if (!isHashed) {
       const hashed = bcrypt.hashSync(password, 10);
       config.admin.pass = hashed;
       try {
         const { updateEnvFile } = require('./api');
-        // updateEnvFile not exported — will be saved on next password change
+        // updateEnvFile không được export — sẽ được lưu ở lần đổi mật khẩu tiếp theo
       } catch {}
     }
     req.session.authenticated = true;
@@ -45,7 +45,7 @@ router.post('/login', async (req, res) => {
   return res.status(401).json({ error: 'Sai username hoặc password' });
 });
 
-// Logout
+// Đăng xuất
 router.post('/logout', (req, res) => {
   const user = req.session.username;
   req.session.destroy(() => {

@@ -33,10 +33,10 @@ function normalizeVN(str) {
 async function findGetflyUser(pancakeStaffName, pancakeStaffEmail) {
   const users = await loadGetflyUsers();
 
-  // Getfly users have: user_id, contact_name, user_name (email), email
-  // Pancake Chat staff have: name, email
+  // Người dùng Getfly có: user_id, contact_name, user_name (email), email
+  // Nhân viên Pancake Chat có: name, email
 
-  // 1. Match by email strictly
+  // 1. Khớp chính xác theo email
   if (pancakeStaffEmail) {
     const emailLower = pancakeStaffEmail.toLowerCase();
     const match = users.find(
